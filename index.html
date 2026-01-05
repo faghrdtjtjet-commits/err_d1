@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyCraft Launcher - Скачать через Telegram</title>
+    <meta name="description" content="Скачать PyCraft Launcher можно только через Telegram-бота. Безопасный лаунчер для Minecraft.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0c0c0c 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ограничивающий оверлей */
+        .restricted-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .restricted-overlay.active {
+            display: flex;
+        }
+
+        .restricted-icon {
+            font-size: 80px;
+            color: #0088cc;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .restricted-title {
+            font-size: 36px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .restricted-text {
+            font-size: 18px;
+            color: #cccccc;
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        /* Шапка */
+        .header {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 136, 204, 0.3);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 32px;
+        }
+
+        /* Главный экран */
+        .hero {
+            padding: 180px 20px 100px;
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .tagline {
+            font-size: 20px;
+            color: #aaaaaa;
+            margin-bottom: 40px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            color: #ffffff;
+            padding: 8px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        /* Кнопки */
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 40px 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            min-width: 240px;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-telegram {
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            color: white;
+            font-size: 20px;
+            padding: 20px 50px;
+        }
+
+        .btn-telegram:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 136, 204, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        /* Карточка скачивания */
+        .download-card {
+            background: rgba(0, 136, 204, 0.1);
+            border: 2px solid rgba(0, 136, 204, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .download-card h3 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #00aced;
+        }
+
+        .download-card p {
+            color: #cccccc;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .telegram-qr {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #0088cc, #00aced);
+            border-radius: 15px;
+            margin: 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            color: white;
+        }
+
+        .instruction-steps {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: left;
+        }
+
+        .instruction-steps ol {
+            margin-left: 20px;
+            color: #cccccc;
+        }
+
+        .instruction-steps li {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .instruction-steps strong {
+            color: #00aced;
+        }
+
+        /* Секции */
+        section {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 60px;
+            color: #ffffff;
+        }
+
+        /* Особенности */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: #0088cc;
+            box-shadow: 0 20px 40px rgba(0, 136, 204, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+            color: #00aced;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .feature-card p {
+            color: #aaaaaa;
+            font-size: 15px;
+        }
+
+        /* Футер */
+        .footer {
+            background: rgba(0, 0, 0, 0.95);
+            padding: 60px 20px 30px;
+            border-top: 1px solid rgba(0, 136, 204, 0.3);
+            margin-top: 100px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+
+        .footer-section h4 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #00aced;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: #aaaaaa;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #00aced;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-link {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: #0088cc;
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666666;
+            font-size: 14px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .hero .tagline {
+                font-size: 18px;
+            }
+            
+            .btn {
+                min-width: 100%;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            section {
+                padding: 60px 20px;
+            }
+            
+            .section-title {
+                font-size: 28px;
+            }
+            
+            .download-card {
+                padding: 20px;
+            }
+            
+            .restricted-title {
+                font-size: 28px;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10001;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(20, 20, 20, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid rgba(0, 136, 204, 0.5);
+            text-align: center;
+        }
+
+        .modal-icon {
+            font-size: 60px;
+            color: #00aced;
+            margin-bottom: 20px;
+        }
+
+        .modal h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .modal p {
+            color: #cccccc;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Ограничивающий оверлей -->
+    <div class="restricted-overlay" id="restrictedOverlay">
+        <div class="restricted-icon">
+            <i class="fab fa-telegram"></i>
+        </div>
+        <h2 class="restricted-title">Скачивание через Telegram</h2>
+        <p class="restricted-text">PyCraft Launcher доступен только через Telegram-бота для вашей безопасности и удобства поддержки.</p>
+        <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
+            <i class="fab fa-telegram"></i> Перейти к боту @jjoasuohfshaisfhaiobot
+        </a>
+        <button class="btn btn-secondary" onclick="closeRestricted()" style="margin-top: 20px;">
+            <i class="fas fa-times"></i> Понятно
+        </button>
+    </div>
+
+    <!-- Модальное окно предупреждения -->
+    <div class="modal" id="warningModal">
+        <div class="modal-content">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Внимание! Безопасность</h3>
+            <p>Скачивание PyCraft доступно только через Telegram-бота. Это защищает вас от:</p>
+            <ul style="text-align: left; margin: 20px 0; color: #cccccc;">
+                <li>✅ Поддельных версий лаунчера</li>
+                <li>✅ Вирусов и вредоносного ПО</li>
+                <li>✅ Неавторизованных дистрибутивов</li>
+                <li>✅ Устаревших версий</li>
+            </ul>
+            <p>Перейдите к боту для получения оригинального и безопасного установщика.</p>
+            <div class="buttons">
+                <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
+                    <i class="fab fa-telegram"></i> Открыть бота
+                </a>
+                <button class="btn btn-secondary" onclick="closeModal()">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">
+                <i class="fab fa-telegram"></i>
+                PyCraft
+            </a>
+            <div style="color: #00aced; font-weight: bold;">
+                <i class="fas fa-lock"></i> Скачивание через Telegram
+            </div>
+        </nav>
+    </header>
+
+    <!-- Главный экран -->
+    <main class="hero animate">
+        <div class="version-badge">Версия 2026 • Только через Telegram</div>
+        <h1>PyCraft Launcher</h1>
+        <p class="tagline">Скачивание доступно исключительно через Telegram-бота для максимальной безопасности</p>
+        
+        <div class="download-card">
+            <h3><i class="fab fa-telegram"></i> Telegram-бот @jjoasuohfshaisfhaiobot</h3>
+            <p>Нажмите кнопку ниже, чтобы перейти к боту и получить ссылку на скачивание</p>
+            
+            <div class="buttons">
+                <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
+                    <i class="fab fa-telegram"></i> Получить ссылку в боте
+                </a>
+            </div>
+            
+            <div class="telegram-qr">
+                <i class="fab fa-telegram"></i>
+            </div>
+            
+            <div class="instruction-steps">
+                <h4 style="color: #00aced; margin-bottom: 20px;"><i class="fas fa-list-ol"></i> Как скачать:</h4>
+                <ol>
+                    <li>Нажмите кнопку "Получить ссылку в боте"</li>
+                    <li>В Telegram откроется бот <strong>@jjoasuohfshaisfhaiobot</strong></li>
+                    <li>Напишите боту команду <strong>/download</strong> или <strong>/start</strong></li>
+                    <li>Получите прямую ссылку на скачивание</li>
+                    <li>Скачайте и запустите установщик</li>
+                </ol>
+            </div>
+            
+            <p style="color: #ff6b6b; font-weight: bold; margin-top: 20px;">
+                <i class="fas fa-exclamation-circle"></i> Внимание: Скачивание с других сайтов может быть опасным!
+            </p>
+        </div>
+    </main>
+
+    <!-- Особенности -->
+    <section class="animate hidden">
+        <h2 class="section-title">🛡️ Защита через Telegram</h2>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Безопасность</h3>
+                <p>Только оригинальные файлы через авторизованного бота. Защита от поддельных версий и вирусов.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3>Поддержка в боте</h3>
+                <p>Мгновенная помощь в Telegram. Ответы на вопросы, решение проблем, инструкции в одном месте.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <h3>Автообновления</h3>
+                <p>Бот уведомляет о новых версиях и предоставляет обновления. Всегда актуальная версия лаунчера.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h3>Верификация</h3>
+                <p>Проверенные файлы с цифровой подписью. Гарантия подлинности и отсутствия изменений.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Обратная связь</h3>
+                <p>Прямой канал связи с разработчиками. Сообщайте об ошибках и предлагайте улучшения через бота.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3>История версий</h3>
+                <p>Доступ к предыдущим версиям через бота. Возможность отката при необходимости.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Преимущества -->
+    <section class="animate hidden" style="background: rgba(0, 136, 204, 0.05); border-radius: 30px;">
+        <h2 class="section-title">✅ Почему через Telegram?</h2>
+        
+        <div class="features-grid">
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Мгновенно</h3>
+                <p>Ссылка на скачивание в пару кликов</p>
+            </div>
+            
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>На всех устройствах</h3>
+                <p>Telegram доступен везде</p>
+            </div>
+            
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3>История в чате</h3>
+                <p>Все ссылки сохраняются</p>
+            </div>
+            
+            <div style="text-align: center; padding: 30px;">
+                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h3>Персонализация</h3>
+                <p>Бот узнает вас</p>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 50px;">
+            <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram" style="font-size: 20px;">
+                <i class="fab fa-telegram"></i> Начать общение с ботом
+            </a>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="animate hidden">
+        <h2 class="section-title">❓ Частые вопросы</h2>
+        
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3><i class="fas fa-question-circle" style="color: #00aced;"></i> Почему нельзя скачать напрямую с сайта?</h3>
+                <p>Мы защищаем пользователей от поддельных версий, вирусов и устаревших дистрибутивов. Через Telegram мы гарантируем подлинность и безопасность файлов.</p>
+            </div>
+            
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3><i class="fas fa-robot" style="color: #00aced;"></i> Что делать, если бот не отвечает?</h3>
+                <p>Бот работает 24/7. Если возникли проблемы, проверьте правильность написания: <strong>@jjoasuohfshaisfhaiobot</strong> или напишите в поддержку.</p>
+            </div>
+            
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3><i class="fas fa-download" style="color: #00aced;"></i> Какие команды есть у бота?</h3>
+                <p>Основные команды: <code>/start</code> - начало работы, <code>/download</code> - получить ссылку, <code>/help</code> - помощь, <code>/install</code> - инструкция установки.</p>
+            </div>
+            
+            <div class="feature-card" style="margin-bottom: 20px;">
+                <h3><i class="fas fa-shield-alt" style="color: #00aced;"></i> Это безопасно?</h3>
+                <p>Да! Telegram шифрует все сообщения, а файлы проверяются на вирусы. Вы получаете оригинальный установщик напрямую от разработчиков.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>PyCraft Launcher</h4>
+                <p style="color: #aaaaaa; margin-bottom: 20px;">Скачивание только через Telegram для вашей безопасности.</p>
+                <div class="social-links">
+                    <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="social-link">
+                        <i class="fab fa-telegram"></i>
+                    </a>
+                    <a href="#" class="social-link">
+                        <i class="fab fa-discord"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Telegram</h4>
+                <ul class="footer-links">
+                    <li><a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank">Бот для скачивания</a></li>
+                    <li><a href="#">Канал новостей</a></li>
+                    <li><a href="#">Чат поддержки</a></li>
+                    <li><a href="#">Сообщество</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Помощь</h4>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="showWarning()">Инструкция скачивания</a></li>
+                    <li><a href="#" onclick="showWarning()">Установка</a></li>
+                    <li><a href="#" onclick="showWarning()">Решение проблем</a></li>
+                    <li><a href="#" onclick="showWarning()">FAQ</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Безопасность</h4>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="showWarning()">Проверка файлов</a></li>
+                    <li><a href="#" onclick="showWarning()">Антивирусная проверка</a></li>
+                    <li><a href="#" onclick="showWarning()">Гарантии</a></li>
+                    <li><a href="#" onclick="showWarning()">Отчеты безопасности</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>© 2024 PyCraft Launcher. Скачивание доступно только через Telegram-бота @jjoasuohfshaisfhaiobot</p>
+            <p style="margin-top: 10px; font-size: 12px; color: #444;">
+                <i class="fas fa-exclamation-triangle"></i> Не скачивайте лаунчер с других источников!
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Показать ограничивающий оверлей при попытке скачать
+        function showRestrictedOverlay() {
+            document.getElementById('restrictedOverlay').classList.add('active');
+            return false;
+        }
+
+        // Закрыть оверлей
+        function closeRestricted() {
+            document.getElementById('restrictedOverlay').classList.remove('active');
+        }
+
+        // Показать модальное окно
+        function showWarning() {
+            document.getElementById('warningModal').classList.add('active');
+            return false;
+        }
+
+        // Закрыть модальное окно
+        function closeModal() {
+            document.getElementById('warningModal').classList.remove('active');
+        }
+
+        // Перехват всех попыток скачать
+        document.addEventListener('DOMContentLoaded', function() {
+            // Блокировка всех ссылок, кроме Telegram
+            document.querySelectorAll('a').forEach(link => {
+                if (!link.href.includes('t.me') && !link.href.startsWith('#')) {
+                    link.addEventListener('click', function(e) {
+                        if (this.textContent.toLowerCase().includes('скачать') || 
+                            this.textContent.toLowerCase().includes('download')) {
+                            e.preventDefault();
+                            showRestrictedOverlay();
+                        }
+                    });
+                }
+            });
+
+            // Показать предупреждение при загрузке
+            setTimeout(() => {
+                showWarning();
+            }, 2000);
+
+            // Анимации при скролле
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate');
+                        entry.target.classList.remove('hidden');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('section').forEach(section => {
+                observer.observe(section);
+            });
+
+            // Кнопка "Получить ссылку"
+            document.querySelector('.btn-telegram').addEventListener('click', function(e) {
+                // Отслеживание перехода к боту
+                setTimeout(() => {
+                    alert('Если бот не открылся, перейдите по ссылке: https://t.me/jjoasuohfshaisfhaiobot\n\nНапишите боту команду /download');
+                }, 500);
+            });
+
+            // Сообщение при закрытии страницы
+            window.addEventListener('beforeunload', function(e) {
+                return "Не забудьте скачать PyCraft через Telegram-бота!";
+            });
+        });
+
+        // Сообщение о важности Telegram
+        console.log('%c⚠️ ВНИМАНИЕ! ⚠️', 'color: red; font-size: 24px; font-weight: bold;');
+        console.log('%cPyCraft Launcher доступен ТОЛЬКО через Telegram-бота:', 'color: orange; font-size: 16px;');
+        console.log('%chttps://t.me/jjoasuohfshaisfhaiobot', 'color: #0088cc; font-size: 18px; font-weight: bold;');
+        console.log('%cНе скачивайте с других источников!', 'color: red; font-size: 14px;');
+    </script>
+</body>
+</html>
