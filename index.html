@@ -36,7 +36,6 @@
         .reset-call-btn.visible { display: block; }
         .reset-call-btn:hover { background: #555; border-color: #888; color: #ccc; }
         
-        /* Выбор устройства */
         .device-selector {
             position: fixed;
             top: 0;
@@ -64,10 +63,10 @@
             text-align: center;
             min-width: 200px;
         }
-        .device-btn:hover {
+        .device-btn:active {
             background: #0f0;
             color: #000;
-            transform: scale(1.05);
+            transform: scale(0.98);
         }
         .device-selector.hide {
             display: none;
@@ -209,8 +208,6 @@
     
     // ==================== УСТРОЙСТВО ====================
     let isPhone = false;
-    let touchStartX = 0;
-    let touchStartMouseX = 640;
     
     // ==================== МЕНЮ ====================
     let inMenu = true;
@@ -248,10 +245,6 @@
         isPlaying(name) {
             const sound = this.sounds[name];
             return sound && !sound.paused && sound.currentTime > 0;
-        },
-        setVolume(name, volume) {
-            const sound = this.sounds[name];
-            if (sound) sound.volume = Math.max(0, Math.min(1, volume));
         }
     };
     
@@ -466,7 +459,6 @@
         if (imagesLoaded === totalImages && cameraImagesLoaded === totalCameraImages) {
             document.getElementById('loading').classList.add('hide');
             document.getElementById('gameContainer').style.display = 'block';
-            // Ждём выбора устройства
         }
     }
     
@@ -801,14 +793,26 @@
             newspaperOverlay = null;
         }
         updateCallButtonVisibility();
-        gameLoop();
     }
     
     function handleMenuClick(e) {
         if (!inMenu) return;
+        
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+            e.preventDefault();
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
-        const clickX = (e.clientX - rect.left) * scaleX, clickY = (e.clientY - rect.top) * scaleY;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (clientX - rect.left) * scaleX;
+        const clickY = (clientY - rect.top) * scaleY;
         const btnPos = MENU_CONFIG.positions.newgame_btn;
         if (clickX >= btnPos.x && clickX <= btnPos.x + btnPos.w && clickY >= btnPos.y && clickY <= btnPos.y + btnPos.h) {
             if (newspaperOverlay) {
@@ -1111,26 +1115,39 @@
         isPhone = (device === 'phone');
         document.getElementById('deviceSelector').classList.add('hide');
         
+        // Убираем все старые слушатели
+        canvas.removeEventListener('click', handleCanvasClick);
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('touchstart', handleTouchStart);
+        canvas.removeEventListener('touchmove', handleTouchMove);
+        canvas.removeEventListener('touchend', handleTouchEnd);
+        canvas.removeEventListener('touchcancel', handleTouchEnd);
+        
+        // Добавляем новые в зависимости от устройства
         if (isPhone) {
             canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.addEventListener('touchend', handleTouchEnd);
             canvas.addEventListener('touchcancel', handleTouchEnd);
+            canvas.addEventListener('touchstart', handleCanvasClick);
             document.body.style.touchAction = 'none';
+        } else {
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('mousemove', handleMouseMove);
         }
-        
-        canvas.addEventListener('click', handleCanvasClick);
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isPhone && !inMenu) {
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = canvas.width / rect.width;
-                mouseX = (e.clientX - rect.left) * scaleX;
-                mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
-            }
-        });
         
         startMenuMusic();
         startMenu();
+        gameLoop();
+    }
+    
+    function handleMouseMove(e) {
+        if (!isPhone && !inMenu) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
+        }
     }
     
     document.querySelectorAll('.device-btn').forEach(btn => {
@@ -1150,7 +1167,6 @@
         document.getElementById('resetCallBtn').addEventListener('click', () => {
             if (!inMenu && !newspaperOverlay && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall();
         });
-        gameLoop();
     }
     
     function gameLoop() {
