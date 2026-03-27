@@ -5,27 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Five Nights at Freddy's - FNaF 1</title>
     <style>
+        @font-face {
+            font-family: 'FNAFPixelOne';
+            src: url('./Sprites/FNAFPixelOne-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Courier New', monospace; }
+        body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'FNAFPixelOne', 'Courier New', monospace; }
         .game-container { position: relative; display: inline-block; }
         canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; transform-origin: top left; }
         .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 300; display: none; }
-        .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; }
-        .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; }
-        .game-over button { padding: 10px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; }
+        .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; font-family: 'FNAFPixelOne', monospace; }
+        .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; font-family: 'FNAFPixelOne', monospace; }
+        .game-over button { padding: 10px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; font-family: 'FNAFPixelOne', monospace; }
         .game-over button:hover { background: #ff0000; }
-        .night-info { position: absolute; top: 10px; right: 10px; color: #0f0; font-size: 14px; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 5px; pointer-events: none; z-index: 100; }
-        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; background: #000; padding: 20px; border-radius: 10px; z-index: 1000; border: 2px solid #0f0; text-align: center; }
-        .loading.hide { display: none; }
-        .reset-call-btn {
+        
+        .night-info {
             position: absolute;
             top: 10px;
-            left: 10px;
+            right: 10px;
+            color: #fff;
+            font-size: 14px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'FNAFPixelOne', monospace;
+            display: none;
+        }
+        .night-info.visible { display: block; }
+        
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; background: #000; padding: 20px; border-radius: 10px; z-index: 1000; border: 2px solid #0f0; text-align: center; font-family: 'FNAFPixelOne', monospace; }
+        .loading.hide { display: none; }
+        
+        .reset-call-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
             background: #444;
             border: 1px solid #666;
-            color: #aaa;
-            padding: 4px 10px;
-            font-family: monospace;
+            color: #fff;
+            padding: 6px 12px;
+            font-family: 'FNAFPixelOne', monospace;
             font-size: 11px;
             cursor: pointer;
             z-index: 150;
@@ -33,7 +58,7 @@
             display: none;
         }
         .reset-call-btn.visible { display: block; }
-        .reset-call-btn:hover { background: #555; border-color: #888; color: #ccc; }
+        .reset-call-btn:hover { background: #555; border-color: #888; }
         
         .device-selector {
             position: fixed;
@@ -52,24 +77,19 @@
         .device-btn {
             background: #222;
             border: 2px solid #0f0;
-            color: #0f0;
+            color: #fff;
             padding: 20px 40px;
             font-size: 24px;
-            font-family: monospace;
+            font-family: 'FNAFPixelOne', monospace;
             cursor: pointer;
             border-radius: 10px;
             transition: all 0.2s;
             text-align: center;
             min-width: 220px;
         }
-        .device-btn:active {
-            background: #0f0;
-            color: #000;
-            transform: scale(0.97);
-        }
-        .device-selector.hide {
-            display: none;
-        }
+        .device-btn.phone { font-size: 20px; }
+        .device-btn:active { background: #0f0; color: #000; transform: scale(0.97); }
+        .device-selector.hide { display: none; }
         
         .zoom-control {
             position: absolute;
@@ -86,23 +106,10 @@
             align-items: center;
             pointer-events: auto;
         }
-        .zoom-control.hide {
-            display: none;
-        }
-        .zoom-control label {
-            color: #0f0;
-            font-size: 11px;
-        }
-        .zoom-control input {
-            width: 100px;
-            cursor: pointer;
-            accent-color: #0f0;
-        }
-        .zoom-control span {
-            color: #0f0;
-            font-size: 10px;
-            min-width: 40px;
-        }
+        .zoom-control.hide { display: none; }
+        .zoom-control label { color: #fff; font-size: 11px; font-family: 'FNAFPixelOne', monospace; }
+        .zoom-control input { width: 100px; cursor: pointer; accent-color: #0f0; }
+        .zoom-control span { color: #fff; font-size: 10px; min-width: 40px; }
         
         .newspaper-overlay {
             position: absolute;
@@ -119,16 +126,9 @@
             transition: opacity 0.5s ease;
             pointer-events: none;
         }
-        .newspaper-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .newspaper-image {
-            max-width: 90%;
-            max-height: 90%;
-            object-fit: contain;
-            cursor: pointer;
-        }
+        .newspaper-overlay.active { opacity: 1; pointer-events: auto; }
+        .newspaper-image { max-width: 90%; max-height: 90%; object-fit: contain; cursor: pointer; }
+        
         .video-overlay {
             position: absolute;
             top: 0;
@@ -144,14 +144,9 @@
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
-        .video-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .video-overlay video {
-            max-width: 100%;
-            max-height: 100%;
-        }
+        .video-overlay.active { opacity: 1; pointer-events: auto; }
+        .video-overlay video { max-width: 100%; max-height: 100%; }
+        
         .jumpscare-overlay {
             position: fixed;
             top: 0;
@@ -165,11 +160,8 @@
             z-index: 1000;
             cursor: pointer;
         }
-        .jumpscare-overlay img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+        .jumpscare-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
         .final-overlay {
             position: fixed;
             top: 0;
@@ -183,41 +175,33 @@
             z-index: 2000;
             flex-direction: column;
         }
-        .final-overlay img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+        .final-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
-        .canvas-wrapper {
-            position: relative;
-            display: inline-block;
-            transform-origin: top left;
-        }
+        .canvas-wrapper { position: relative; display: inline-block; transform-origin: top left; }
     </style>
 </head>
 <body>
-<div class="loading" id="loading"><div>🎮 FNaF Recreation</div><div style="font-size:12px;margin-top:10px;">Загрузка...</div></div>
+<div class="loading" id="loading"><div>🎮 FNaF Recreation</div><div style="font-size:12px;margin-top:10px;">ЗАГРУЗКА...</div></div>
 <div class="game-container" id="gameContainer" style="display: none;">
     <div class="canvas-wrapper" id="canvasWrapper">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
     </div>
-    <div class="night-info" id="nightInfo">Night 1 | 12:00 AM</div>
-    <div class="reset-call-btn" id="resetCallBtn">Сбросить вызов</div>
+    <div class="night-info" id="nightInfo">NIGHT 1 | 12:00 AM</div>
+    <div class="reset-call-btn" id="resetCallBtn">СБРОСИТЬ ВЫЗОВ</div>
     <div class="game-over" id="gameOverScreen">
         <h1>⚠️ GAME OVER ⚠️</h1>
-        <p id="gameOverText">You got caught!</p>
-        <button id="restartBtn">Restart Night</button>
+        <p id="gameOverText">YOU GOT CAUGHT!</p>
+        <button id="restartBtn">RESTART NIGHT</button>
     </div>
 </div>
 
 <div class="device-selector" id="deviceSelector">
-    <div class="device-btn" data-device="pc">💻 ПК (мышь)</div>
-    <div class="device-btn" data-device="phone">📱 Телефон (тач + масштаб)</div>
+    <div class="device-btn" data-device="pc">💻 ПК</div>
+    <div class="device-btn phone" data-device="phone">📱 ТЕЛЕФОН</div>
 </div>
 
 <div class="zoom-control" id="zoomControl">
-    <label>🔍 Масштаб:</label>
+    <label>🔍 МАСШТАБ:</label>
     <input type="range" id="zoomSlider" min="30" max="200" value="100" step="5">
     <span id="zoomValue">100%</span>
 </div>
@@ -255,44 +239,33 @@
     // ==================== УСТРОЙСТВО ====================
     let isPhone = false;
     let currentZoom = 100;
+    let newspaperActive = false;
+    let isGameStarted = false;
     
     // ==================== МАСШТАБ ====================
     function updateZoom() {
         const scale = currentZoom / 100;
         canvasWrapper.style.transform = `scale(${scale})`;
         canvasWrapper.style.transformOrigin = 'top left';
-        
         const container = document.querySelector('.game-container');
-        const scaledWidth = 1280 * scale;
-        const scaledHeight = 720 * scale;
-        container.style.width = `${scaledWidth}px`;
-        container.style.height = `${scaledHeight}px`;
-        
+        container.style.width = `${1280 * scale}px`;
+        container.style.height = `${720 * scale}px`;
         document.getElementById('zoomValue').innerText = currentZoom + '%';
     }
-    
-    function setZoom(value) {
-        currentZoom = Math.min(200, Math.max(30, value));
-        updateZoom();
-    }
+    function setZoom(value) { currentZoom = Math.min(200, Math.max(30, value)); updateZoom(); }
     
     // ==================== ПОЛНОЭКРАННЫЙ РЕЖИМ ====================
     function enterFullscreen() {
         const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-        }
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
     
     // ==================== МЕНЮ ====================
     let inMenu = true;
     let newspaperOverlay = null;
     let videoOverlay = null;
-    let audioUnlocked = false;
     let finalOverlay = null;
     let finalMusicPlaying = false;
     let finalTimer = null;
@@ -316,11 +289,7 @@
             const sound = this.sounds[name];
             if (sound) { sound.pause(); sound.currentTime = 0; }
         },
-        stopAll() {
-            for (const key in this.sounds) {
-                this.stop(key);
-            }
-        },
+        stopAll() { for (const key in this.sounds) this.stop(key); },
         isPlaying(name) {
             const sound = this.sounds[name];
             return sound && !sound.paused && sound.currentTime > 0;
@@ -330,32 +299,22 @@
     // ==================== ФИНАЛ ====================
     function showFinal() {
         if (finalOverlay) return;
-        
         AudioManager.stopAll();
         AudioManager.play('winning_bells');
         finalMusicPlaying = true;
-        
         finalOverlay = document.createElement('div');
         finalOverlay.className = 'final-overlay';
         const img = document.createElement('img');
         img.src = MENU_CONFIG.textures.main_menu;
         finalOverlay.appendChild(img);
         document.body.appendChild(finalOverlay);
-        
         const checkMusicInterval = setInterval(() => {
             if (!AudioManager.isPlaying('winning_bells')) {
                 clearInterval(checkMusicInterval);
-                setTimeout(() => {
-                    location.reload();
-                }, 500);
+                setTimeout(() => location.reload(), 500);
             }
         }, 500);
-        
-        finalTimer = setTimeout(() => {
-            if (finalMusicPlaying) {
-                location.reload();
-            }
-        }, 12000);
+        finalTimer = setTimeout(() => { if (finalMusicPlaying) location.reload(); }, 12000);
     }
     
     // ==================== СКРИМЕР ====================
@@ -363,40 +322,23 @@
         const overlay = document.createElement('div');
         overlay.className = 'jumpscare-overlay';
         const img = document.createElement('img');
-        const jumpscarePaths = {
-            bonnie: './Sprites/bon.png',
-            chica: './Sprites/chik.png',
-            foxy: './Sprites/fox.png',
-            freddy: './Sprites/fred.png'
-        };
+        const jumpscarePaths = { bonnie: './Sprites/bon.png', chica: './Sprites/chik.png', foxy: './Sprites/fox.png', freddy: './Sprites/fred.png' };
         img.src = jumpscarePaths[animatronic];
         img.style.transform = 'scale(1.5)';
         overlay.appendChild(img);
         document.body.appendChild(overlay);
-        
-        overlay.addEventListener('click', () => {
-            overlay.remove();
-            if (callback) callback();
-        });
-        
-        setTimeout(() => {
-            if (document.body.contains(overlay)) {
-                overlay.remove();
-                if (callback) callback();
-            }
-        }, 3000);
+        overlay.addEventListener('click', () => { overlay.remove(); if (callback) callback(); });
+        setTimeout(() => { if (document.body.contains(overlay)) { overlay.remove(); if (callback) callback(); } }, 3000);
     }
     
     // ==================== ВИДЕО 6 AM ====================
     function showSixAmVideo(callback) {
         if (videoOverlay) return;
-        
         AudioManager.stop('office_ambience');
         AudioManager.stop('mid_ambience');
         AudioManager.stop('powerdown');
         AudioManager.stop('freddy_is_here');
         AudioManager.stop('phone_call');
-        
         videoOverlay = document.createElement('div');
         videoOverlay.className = 'video-overlay';
         const video = document.createElement('video');
@@ -405,21 +347,14 @@
         video.muted = false;
         video.loop = false;
         video.volume = 0.6;
-        
         videoOverlay.appendChild(video);
         document.getElementById('gameContainer').appendChild(videoOverlay);
         setTimeout(() => videoOverlay.classList.add('active'), 10);
-        
         const onEnded = () => {
             video.pause();
             videoOverlay.classList.remove('active');
-            setTimeout(() => {
-                videoOverlay.remove();
-                videoOverlay = null;
-                if (callback) callback();
-            }, 300);
+            setTimeout(() => { videoOverlay.remove(); videoOverlay = null; if (callback) callback(); }, 300);
         };
-        
         video.addEventListener('ended', onEnded);
         videoOverlay.addEventListener('click', onEnded);
     }
@@ -427,7 +362,7 @@
     // ==================== ГАЗЕТА ====================
     function showNewspaperWithAnimation(callback) {
         if (newspaperOverlay) return;
-        
+        newspaperActive = true;
         newspaperOverlay = document.createElement('div');
         newspaperOverlay.className = 'newspaper-overlay';
         const img = document.createElement('img');
@@ -436,20 +371,11 @@
         newspaperOverlay.appendChild(img);
         document.getElementById('gameContainer').appendChild(newspaperOverlay);
         setTimeout(() => newspaperOverlay.classList.add('active'), 10);
-        
         const closeNewspaper = () => {
             newspaperOverlay.classList.remove('active');
-            setTimeout(() => {
-                newspaperOverlay.remove();
-                newspaperOverlay = null;
-                if (callback) callback();
-            }, 500);
+            setTimeout(() => { newspaperOverlay.remove(); newspaperOverlay = null; newspaperActive = false; if (callback) callback(); }, 500);
         };
-        
         img.addEventListener('click', closeNewspaper);
-        if (MENU_CONFIG.settings.auto_close) {
-            setTimeout(closeNewspaper, MENU_CONFIG.settings.newspaper_duration * 1000);
-        }
     }
     
     // ==================== ЗАГРУЗКА ИЗОБРАЖЕНИЙ ====================
@@ -494,7 +420,6 @@
     };
     
     const allTextures = { ...gameTextures, ...menuTextures };
-    
     for (const [key, path] of Object.entries(allTextures)) {
         totalImages++;
         images[key] = new Image();
@@ -506,10 +431,8 @@
     const cameraImages = {};
     let cameraImagesLoaded = 0;
     let totalCameraImages = 0;
-    
     const CAMERA_NAMES = ["Show Stage", "Backstage", "Dining Area", "East Hall", "East Hall Corner",
         "Pirates Cove", "Restrooms", "Supply Closet", "West Hall", "West Hall Corner"];
-    
     const cameraBackgrounds = {
         "Show Stage": "./Sprites/rooms/show_stage/defined_show_stage.png",
         "Backstage": "./Sprites/rooms/backstage/defined_backstage.png",
@@ -543,69 +466,46 @@
     
     // ==================== МУЗЫКА В МЕНЮ ====================
     let menuMusicStarted = false;
-    
     function startMenuMusic() {
         if (menuMusicStarted) return;
         AudioManager.load('menu_music', './SFX/FNAF1 sound/darkness music.wav', { loop: true, volume: 0.5 });
         AudioManager.play('menu_music');
         menuMusicStarted = true;
     }
-    
     function stopMenuMusic() {
-        if (AudioManager.isPlaying('menu_music')) {
-            AudioManager.stop('menu_music');
-        }
+        if (AudioManager.isPlaying('menu_music')) AudioManager.stop('menu_music');
         menuMusicStarted = false;
     }
     
     // ==================== ЗВОНОК ====================
     let callTimeout = null;
     let callActive = false;
-    
     function startPhoneCall(nightNumber) {
         stopPhoneCall();
         if (nightNumber >= 6) return;
         const callFile = `./SFX/voiceover${nightNumber}.wav`;
         AudioManager.load('phone_call', callFile, { volume: 0.7 });
-        callTimeout = setTimeout(() => {
-            AudioManager.play('phone_call');
-            callActive = true;
-            updateCallButtonVisibility();
-        }, 500);
+        callTimeout = setTimeout(() => { AudioManager.play('phone_call'); callActive = true; updateCallButtonVisibility(); }, 500);
     }
-    
     function stopPhoneCall() {
         if (callTimeout) { clearTimeout(callTimeout); callTimeout = null; }
         if (AudioManager.isPlaying('phone_call')) AudioManager.stop('phone_call');
         callActive = false;
         updateCallButtonVisibility();
     }
-    
-    function resetPhoneCall() {
-        if (callActive || callTimeout) stopPhoneCall();
-    }
-    
+    function resetPhoneCall() { if (callActive || callTimeout) stopPhoneCall(); }
     function updateCallButtonVisibility() {
         const btn = document.getElementById('resetCallBtn');
-        const isVisible = !inMenu && !newspaperOverlay && (callActive || callTimeout !== null);
+        const isVisible = !inMenu && !newspaperActive && (callActive || callTimeout !== null);
         if (isVisible) btn.classList.add('visible');
         else btn.classList.remove('visible');
     }
     
     // ==================== СТАТИЧЕСКИЙ ЭФФЕКТ ====================
-    let staticFrame = 0;
-    let staticTimer = 0;
-    const STATIC_FRAME_COUNT = 8;
-    const STATIC_FRAME_WIDTH = 1280;
-    const STATIC_FRAME_HEIGHT = 720;
-    let cameraStaticIntensity = 0.25;
-    let cameraStaticTimer = 0;
-    
-    function updateStaticEffect() {
-        staticTimer++;
-        if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; }
-    }
-    
+    let staticFrame = 0, staticTimer = 0;
+    const STATIC_FRAME_COUNT = 8, STATIC_FRAME_WIDTH = 1280, STATIC_FRAME_HEIGHT = 720;
+    let cameraStaticIntensity = 0.25, cameraStaticTimer = 0;
+    function updateStaticEffect() { staticTimer++; if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; } }
     function drawStaticOverlay(intensity) {
         if (!images.staticScreen || intensity <= 0) return;
         ctx.save();
@@ -617,7 +517,6 @@
     
     // ==================== КОМНАТЫ И АНИМАТРОНИКИ ====================
     let cameraRooms = CAMERA_NAMES.map(name => ({ name: name, panX: 0, panDir: 1, maxPan: 320 }));
-    
     const minimapZones = [
         { name: "Show Stage", x: 920, y: 295, w: 70, h: 40 }, { name: "Dining Area", x: 900, y: 350, w: 70, h: 40 },
         { name: "Backstage", x: 795, y: 380, w: 70, h: 40 }, { name: "Pirates Cove", x: 870, y: 430, w: 70, h: 40 },
@@ -625,7 +524,6 @@
         { name: "East Hall", x: 1025, y: 545, w: 70, h: 40 }, { name: "East Hall Corner", x: 1025, y: 585, w: 70, h: 40 },
         { name: "West Hall", x: 920, y: 545, w: 70, h: 40 }, { name: "West Hall Corner", x: 920, y: 585, w: 70, h: 40 }
     ];
-    
     const cameraPositions = {
         "Show Stage": { bonnie: { x: 280, y: 150 }, chica: { x: 900, y: 150 }, freddy: { x: 590, y: 110 } },
         "Backstage": { bonnie: { x: 500, y: 180 }, freddy: { x: 750, y: 150 } },
@@ -638,7 +536,6 @@
         "West Hall": { bonnie: { x: 600, y: 230 }, freddy: { x: 750, y: 210 } },
         "West Hall Corner": { bonnie: { x: 700, y: 210 }, freddy: { x: 800, y: 190 } }
     };
-    
     const moveMap = {
         bonnie: { "Show Stage": ["Dining Area", "West Hall"], "Dining Area": ["Show Stage", "West Hall", "Supply Closet"], "West Hall": ["Dining Area", "West Hall Corner"], "West Hall Corner": ["West Hall", "Office Left"], "Supply Closet": ["Dining Area"], "Office Left": ["West Hall Corner"] },
         chica: { "Show Stage": ["Dining Area", "East Hall"], "Dining Area": ["Show Stage", "East Hall", "Restrooms"], "East Hall": ["Dining Area", "East Hall Corner"], "East Hall Corner": ["East Hall", "Office Right"], "Restrooms": ["Dining Area"], "Office Right": ["East Hall Corner"] },
@@ -657,9 +554,7 @@
     let leftDoorClosed = false, rightDoorClosed = false, jumpscareTriggered = false;
     let lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
     let cameraPanSpeed = 0.4;
-    
-    let leftLightSoundPlayed = false;
-    let rightLightSoundPlayed = false;
+    let leftLightSoundPlayed = false, rightLightSoundPlayed = false;
     
     function updateAnimatronics() {
         if (!gameRunning || powerOut || jumpscareTriggered) return;
@@ -682,9 +577,7 @@
             anim.location = newLoc;
             anim.atDoor = (anim.location === "Office Left" || anim.location === "Office Right");
             anim.side = anim.atDoor ? (anim.location === "Office Left" ? "LEFT" : "RIGHT") : null;
-            if (anim.atDoor && !wasAtDoor) {
-                anim.doorArrivalTime = Date.now();
-            }
+            if (anim.atDoor && !wasAtDoor) anim.doorArrivalTime = Date.now();
             if (!anim.atDoor && wasAtDoor) anim.doorArrivalTime = 0;
             if (name === "foxy") { if (anim.location !== "Pirates Cove") anim.runCounter = (anim.runCounter || 0) + 1; else anim.runCounter = 0; }
         }
@@ -697,38 +590,24 @@
     function checkDoorAttacks() {
         if (!gameRunning || powerOut || jumpscareTriggered) return;
         const now = Date.now();
-        if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && !leftDoorClosed && now - animatronics.bonnie.doorArrivalTime >= 3000) {
-            triggerJumpscare("Bonnie");
-        }
-        if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && !rightDoorClosed && now - animatronics.chica.doorArrivalTime >= 3000) {
-            triggerJumpscare("Chica");
-        }
-        if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && !rightDoorClosed && animatronics.foxy.runCounter > 2 && now - animatronics.foxy.doorArrivalTime >= 3000) {
-            triggerJumpscare("Foxy");
-        }
-        if (animatronics.freddy.atDoor && (!leftDoorClosed || !rightDoorClosed) && now - animatronics.freddy.doorArrivalTime >= 3000) {
-            triggerJumpscare("Freddy");
-        }
+        if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && !leftDoorClosed && now - animatronics.bonnie.doorArrivalTime >= 3000) triggerJumpscare("Bonnie");
+        if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && !rightDoorClosed && now - animatronics.chica.doorArrivalTime >= 3000) triggerJumpscare("Chica");
+        if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && !rightDoorClosed && animatronics.foxy.runCounter > 2 && now - animatronics.foxy.doorArrivalTime >= 3000) triggerJumpscare("Foxy");
+        if (animatronics.freddy.atDoor && (!leftDoorClosed || !rightDoorClosed) && now - animatronics.freddy.doorArrivalTime >= 3000) triggerJumpscare("Freddy");
     }
     
     function triggerJumpscare(name) {
         if (jumpscareTriggered) return;
         jumpscareTriggered = true;
         gameRunning = false;
-        
         AudioManager.stop('office_ambience');
         AudioManager.stop('mid_ambience');
         AudioManager.stop('powerdown');
         AudioManager.stop('freddy_is_here');
         AudioManager.stop('phone_call');
         AudioManager.stop('menu_music');
-        
         AudioManager.play('jumpscare');
-        
-        showJumpscare(name.toLowerCase(), () => {
-            document.getElementById('gameOverScreen').style.display = 'flex';
-        });
-        
+        showJumpscare(name.toLowerCase(), () => { document.getElementById('gameOverScreen').style.display = 'flex'; });
         stopPhoneCall();
     }
     
@@ -743,9 +622,22 @@
     const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
     let freddyActive = false, freddyBlink = false, freddyBlinkTimer = 0, roomDark = false;
     
-    AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { volume: 0.5 });
+    AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { loop: true, volume: 0.4 });
     AudioManager.load('windowscare', './SFX/windowscare.wav', { volume: 0.6 });
     AudioManager.load('winning_bells', './SFX/winning_bells.wav', { volume: 0.7 });
+    
+    let lightHumPlaying = false;
+    
+    function updateLightHum() {
+        const anyLight = leftLight || rightLight;
+        if (anyLight && !lightHumPlaying) {
+            AudioManager.play('light_click');
+            lightHumPlaying = true;
+        } else if (!anyLight && lightHumPlaying) {
+            AudioManager.stop('light_click');
+            lightHumPlaying = false;
+        }
+    }
     
     function startNight(night) {
         nightNumber = night;
@@ -760,9 +652,13 @@
         jumpscareTriggered = false; gameRunning = true;
         cameraStaticIntensity = 0.25;
         lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
-        leftLightSoundPlayed = false;
-        rightLightSoundPlayed = false;
+        leftLightSoundPlayed = false; rightLightSoundPlayed = false;
         document.getElementById('gameOverScreen').style.display = 'none';
+        
+        if (lightHumPlaying) {
+            AudioManager.stop('light_click');
+            lightHumPlaying = false;
+        }
         
         animatronics = {
             bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
@@ -778,7 +674,10 @@
         animatronics.foxy.aiLevel = Math.floor(lvl * 0.8);
         animatronics.freddy.aiLevel = Math.floor(lvl * 0.6);
         
-        document.getElementById('nightInfo').innerHTML = `Night ${night} | 12:00 AM`;
+        document.getElementById('nightInfo').classList.add('visible');
+        const hour12 = currentHour % 12 || 12;
+        const ampm = currentHour >= 12 ? "PM" : "AM";
+        document.getElementById('nightInfo').innerHTML = `NIGHT ${night} | ${hour12}:00 ${ampm}`;
         document.getElementById('gameOverScreen').style.display = 'none';
         
         AudioManager.play('office_ambience');
@@ -798,29 +697,24 @@
         if (newHour !== hourCount && newHour <= 6) {
             hourCount = newHour;
             currentHour = hourCount === 0 ? 12 : hourCount;
-            document.getElementById('nightInfo').innerHTML = `Night ${nightNumber} | ${currentHour}:00 AM`;
+            const hour12 = currentHour % 12 || 12;
+            const ampm = currentHour >= 12 ? "PM" : "AM";
+            document.getElementById('nightInfo').innerHTML = `NIGHT ${nightNumber} | ${hour12}:00 ${ampm}`;
         }
         if (hourCount >= 6 && !jumpscareTriggered) {
             gameRunning = false;
-            
             AudioManager.stop('office_ambience');
             AudioManager.stop('mid_ambience');
             AudioManager.stop('powerdown');
             AudioManager.stop('freddy_is_here');
             AudioManager.stop('phone_call');
-            
-            if (nightNumber === 5) {
-                showFinal();
-            } else {
-                showSixAmVideo(() => {
-                    if (nightNumber < 6) startNight(nightNumber + 1);
-                    else alert("🏆 You completed all nights! 🏆");
-                });
-            }
+            if (nightNumber === 5) { showFinal(); }
+            else { showSixAmVideo(() => { if (nightNumber < 6) startNight(nightNumber + 1); else alert("🏆 YOU COMPLETED ALL NIGHTS! 🏆"); }); }
         }
     }
     
     function updatePower() {
+        if (inMenu || newspaperActive || !isGameStarted) return;
         if (!gameRunning || powerOut) return;
         const now = Date.now();
         const dt = (now - lastPowerUpdate) / 1000;
@@ -834,6 +728,7 @@
             AudioManager.stop('mid_ambience');
             AudioManager.play('powerdown');
             leftDoor = false; rightDoor = false; leftLight = false; rightLight = false; cameraOpen = false;
+            if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
             setTimeout(() => {
                 freddyActive = true; freddyBlinkTimer = Date.now();
                 AudioManager.play('freddy_is_here');
@@ -867,26 +762,19 @@
     // ==================== МЕНЮ ====================
     function startMenu() {
         inMenu = true;
-        if (newspaperOverlay) {
-            newspaperOverlay.remove();
-            newspaperOverlay = null;
-        }
+        isGameStarted = false;
+        document.getElementById('nightInfo').classList.remove('visible');
+        if (newspaperOverlay) { newspaperOverlay.remove(); newspaperOverlay = null; }
+        newspaperActive = false;
+        if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
         updateCallButtonVisibility();
     }
     
     function handleMenuClick(e) {
         if (!inMenu) return;
-        
         let clientX, clientY;
-        if (e.touches) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-            e.preventDefault();
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        
+        if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
+        else { clientX = e.clientX; clientY = e.clientY; }
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
@@ -899,7 +787,9 @@
                 setTimeout(() => {
                     if (newspaperOverlay) newspaperOverlay.remove();
                     newspaperOverlay = null;
+                    newspaperActive = false;
                     inMenu = false;
+                    isGameStarted = true;
                     stopMenuMusic();
                     startNight(1);
                     updateCallButtonVisibility();
@@ -907,6 +797,7 @@
             } else {
                 showNewspaperWithAnimation(() => {
                     inMenu = false;
+                    isGameStarted = true;
                     stopMenuMusic();
                     startNight(1);
                     updateCallButtonVisibility();
@@ -985,28 +876,32 @@
                         }
                     }
                 }
-                
                 updateStaticEffect();
                 drawStaticOverlay(cameraStaticIntensity);
-                
                 if (images.cameraBarMenu) ctx.drawImage(images.cameraBarMenu, 350, 640);
                 if (images.cameraCams) ctx.drawImage(images.cameraCams, 800, 300);
                 if (images.cameraRedDot) ctx.drawImage(images.cameraRedDot, 40, 40);
                 if (images.cameraBorder) ctx.drawImage(images.cameraBorder, 0, 0);
                 ctx.fillStyle = "#fff";
-                ctx.font = "18px monospace";
+                ctx.font = "18px 'FNAFPixelOne', monospace";
                 ctx.fillText(room.name, 20, 50);
             }
         }
         
+        // ========== POWER И USAGE В ОДНОЙ СТРОКЕ, ПРИВЯЗАНЫ К ЛЕВОМУ КРАЮ ==========
         if (!powerOut) {
-            ctx.fillStyle = "#0f0"; ctx.font = "20px monospace";
-            ctx.fillText(Math.floor(power) + "%", 190, 638);
-            ctx.fillStyle = "#fff"; ctx.font = "14px monospace";
-            ctx.fillText("POWER", 50, 638); ctx.fillText("USAGE", 50, 673);
-            let usage = (leftDoor?1:0)+(rightDoor?1:0)+(leftLight?1:0)+(rightLight?1:0)+(cameraOpen?1:0);
-            const usageColor = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#0f0";
-            ctx.fillStyle = usageColor; ctx.fillText(usage + "/4", 130, 673);
+            // POWER: 100% (одна строка)
+            ctx.fillStyle = "#fff";
+            ctx.font = "20px 'FNAFPixelOne', monospace";
+            ctx.fillText("POWER: " + Math.floor(power) + "%", 50, 638);
+            
+            // USAGE: 0/4 (одна строка, чуть ниже)
+            let usage = (leftDoor?1:0) + (rightDoor?1:0) + (leftLight?1:0) + (rightLight?1:0) + (cameraOpen?1:0);
+            usage = Math.min(usage, 4);
+            const usageColor = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#fff";
+            ctx.fillStyle = usageColor;
+            ctx.font = "14px 'FNAFPixelOne', monospace";
+            ctx.fillText("USAGE: " + usage + "/4", 50, 673);
         }
         
         const SPRITE_SIZE = 253;
@@ -1015,26 +910,14 @@
         const RIGHT_DOOR_X = 1300 - bgOffsetX;
         
         if (!leftDoor && leftLight) {
-            if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && images.bonnie) {
-                ctx.drawImage(images.bonnie, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            }
-            if (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT" && images.freddy) {
-                ctx.drawImage(images.freddy, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            }
+            if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && images.bonnie) ctx.drawImage(images.bonnie, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT" && images.freddy) ctx.drawImage(images.freddy, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
         }
-        
         if (!rightDoor && rightLight) {
-            if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && images.chica) {
-                ctx.drawImage(images.chica, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            }
-            if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && images.foxy) {
-                ctx.drawImage(images.foxy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            }
-            if (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT" && images.freddy) {
-                ctx.drawImage(images.freddy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            }
+            if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && images.chica) ctx.drawImage(images.chica, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && images.foxy) ctx.drawImage(images.foxy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT" && images.freddy) ctx.drawImage(images.freddy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
         }
-        
         if (roomDark) { ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
     }
     
@@ -1050,17 +933,9 @@
     function handleGameClick(e) {
         if (inMenu) return;
         if (!gameRunning || powerOut) return;
-        
         let clientX, clientY;
-        if (e.touches) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-            e.preventDefault();
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        
+        if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
+        else { clientX = e.clientX; clientY = e.clientY; }
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
@@ -1094,22 +969,11 @@
                 const wasOff = !leftLight;
                 leftLight = !leftLight;
                 if (leftLight) rightLight = false;
-                if (wasOff && leftLight) {
-                    AudioManager.stop('light_click');
-                    AudioManager.play('light_click');
-                } else if (!wasOff && !leftLight) {
-                    AudioManager.stop('light_click');
-                }
+                updateLightHum();
                 if (leftLight && !leftLightSoundPlayed) {
-                    const hasAnimAtLeftDoor = (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") ||
-                                               (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT");
-                    if (hasAnimAtLeftDoor) {
-                        AudioManager.play('windowscare');
-                        leftLightSoundPlayed = true;
-                    }
-                } else if (!leftLight) {
-                    leftLightSoundPlayed = false;
-                }
+                    const hasAnimAtLeftDoor = (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT");
+                    if (hasAnimAtLeftDoor) { AudioManager.play('windowscare'); leftLightSoundPlayed = true; }
+                } else if (!leftLight) { leftLightSoundPlayed = false; }
                 return;
             }
             if (clickX >= clickZones.rightDoorBtn.x && clickX <= clickZones.rightDoorBtn.x + clickZones.rightDoorBtn.w && clickY >= clickZones.rightDoorBtn.y && clickY <= clickZones.rightDoorBtn.y + clickZones.rightDoorBtn.h) {
@@ -1121,146 +985,62 @@
                 const wasOff = !rightLight;
                 rightLight = !rightLight;
                 if (rightLight) leftLight = false;
-                if (wasOff && rightLight) {
-                    AudioManager.stop('light_click');
-                    AudioManager.play('light_click');
-                } else if (!wasOff && !rightLight) {
-                    AudioManager.stop('light_click');
-                }
+                updateLightHum();
                 if (rightLight && !rightLightSoundPlayed) {
-                    const hasAnimAtRightDoor = (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") ||
-                                                (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") ||
-                                                (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT");
-                    if (hasAnimAtRightDoor) {
-                        AudioManager.play('windowscare');
-                        rightLightSoundPlayed = true;
-                    }
-                } else if (!rightLight) {
-                    rightLightSoundPlayed = false;
-                }
+                    const hasAnimAtRightDoor = (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") || (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT");
+                    if (hasAnimAtRightDoor) { AudioManager.play('windowscare'); rightLightSoundPlayed = true; }
+                } else if (!rightLight) { rightLightSoundPlayed = false; }
                 return;
             }
         }
     }
     
     // ==================== ТЕЛЕФОН: ПАНОРАМИРОВАНИЕ ====================
-    let touchStartMouseX = 640;
-    let touchStartX = 0;
+    let touchStartMouseX = 640, touchStartX = 0;
+    function handleTouchStart(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; touchStartX = touchX; touchStartMouseX = mouseX; e.preventDefault(); } }
+    function handleTouchMove(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; const deltaX = touchX - touchStartX; let newMouseX = touchStartMouseX + deltaX; newMouseX = Math.min(Math.max(newMouseX, 0), canvas.width); mouseX = newMouseX; e.preventDefault(); } }
+    function handleTouchEnd(e) { if (inMenu) return; if (isPhone) e.preventDefault(); }
     
-    function handleTouchStart(e) {
-        if (inMenu) return;
-        if (isPhone) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
-            touchStartX = touchX;
-            touchStartMouseX = mouseX;
-            e.preventDefault();
-        }
-    }
-    
-    function handleTouchMove(e) {
-        if (inMenu) return;
-        if (isPhone) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
-            const deltaX = touchX - touchStartX;
-            let newMouseX = touchStartMouseX + deltaX;
-            newMouseX = Math.min(Math.max(newMouseX, 0), canvas.width);
-            mouseX = newMouseX;
-            e.preventDefault();
-        }
-    }
-    
-    function handleTouchEnd(e) {
-        if (inMenu) return;
-        if (isPhone) {
-            e.preventDefault();
-        }
-    }
-    
-    // ==================== ОБЩИЙ КЛИК ====================
-    function handleCanvasClick(e) {
-        if (inMenu) {
-            handleMenuClick(e);
-        } else {
-            handleGameClick(e);
-        }
-    }
+    function handleCanvasClick(e) { if (inMenu) handleMenuClick(e); else handleGameClick(e); }
     
     // ==================== ВЫБОР УСТРОЙСТВА ====================
     function selectDevice(device) {
         isPhone = (device === 'phone');
         document.getElementById('deviceSelector').classList.add('hide');
-        
         const zoomControl = document.getElementById('zoomControl');
-        if (isPhone) {
-            zoomControl.classList.remove('hide');
-            setZoom(100);
-        } else {
-            zoomControl.classList.add('hide');
-            setZoom(100);
-        }
-        
+        if (isPhone) { zoomControl.classList.remove('hide'); setZoom(100); }
+        else { zoomControl.classList.add('hide'); setZoom(100); }
         canvas.removeEventListener('click', handleCanvasClick);
         canvas.removeEventListener('mousemove', handleMouseMove);
         canvas.removeEventListener('touchstart', handleTouchStart);
         canvas.removeEventListener('touchmove', handleTouchMove);
         canvas.removeEventListener('touchend', handleTouchEnd);
-        canvas.removeEventListener('touchcancel', handleTouchEnd);
-        
         if (isPhone) {
             canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.addEventListener('touchend', handleTouchEnd);
-            canvas.addEventListener('touchcancel', handleTouchEnd);
             canvas.addEventListener('touchstart', handleCanvasClick);
             document.body.style.touchAction = 'none';
         } else {
             canvas.addEventListener('click', handleCanvasClick);
             canvas.addEventListener('mousemove', handleMouseMove);
         }
-        
-        // АВТОМАТИЧЕСКИЙ ПОЛНОЭКРАННЫЙ РЕЖИМ
         enterFullscreen();
-        
         startMenuMusic();
         startMenu();
         gameLoop();
     }
     
-    function handleMouseMove(e) {
-        if (!isPhone && !inMenu) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            mouseX = (e.clientX - rect.left) * scaleX;
-            mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
-        }
-    }
+    function handleMouseMove(e) { if (!isPhone && !inMenu) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; mouseX = (e.clientX - rect.left) * scaleX; mouseX = Math.min(Math.max(mouseX, 0), canvas.width); } }
     
     const zoomSlider = document.getElementById('zoomSlider');
-    zoomSlider.addEventListener('input', (e) => {
-        setZoom(parseInt(e.target.value));
-    });
-    
-    document.querySelectorAll('.device-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectDevice(btn.dataset.device);
-        });
-    });
+    zoomSlider.addEventListener('input', (e) => { setZoom(parseInt(e.target.value)); });
+    document.querySelectorAll('.device-btn').forEach(btn => { btn.addEventListener('click', () => { selectDevice(btn.dataset.device); }); });
     
     function startGameLoop() {
-        window.addEventListener('keydown', (e) => {
-            if (!inMenu && cameraOpen && cameraAnimFrame === 10) {
-                if (e.key === 'ArrowRight') currentCam = (currentCam + 1) % cameraRooms.length;
-                if (e.key === 'ArrowLeft') currentCam = (currentCam - 1 + cameraRooms.length) % cameraRooms.length;
-            }
-        });
+        window.addEventListener('keydown', (e) => { if (!inMenu && cameraOpen && cameraAnimFrame === 10) { if (e.key === 'ArrowRight') currentCam = (currentCam + 1) % cameraRooms.length; if (e.key === 'ArrowLeft') currentCam = (currentCam - 1 + cameraRooms.length) % cameraRooms.length; } });
         document.getElementById('restartBtn').addEventListener('click', () => { if (!inMenu) startNight(nightNumber); });
-        document.getElementById('resetCallBtn').addEventListener('click', () => {
-            if (!inMenu && !newspaperOverlay && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall();
-        });
+        document.getElementById('resetCallBtn').addEventListener('click', () => { if (!inMenu && !newspaperActive && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall(); });
     }
     
     function gameLoop() {
@@ -1277,9 +1057,7 @@
                 rightDoorClosed = rightDoor;
             }
             drawGame();
-        } else {
-            drawMenu();
-        }
+        } else { drawMenu(); }
         requestAnimationFrame(gameLoop);
     }
     
