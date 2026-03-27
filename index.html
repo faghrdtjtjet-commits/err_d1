@@ -2,20 +2,20 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Five Nights at Freddy's - FNaF 1</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Courier New', monospace; }
         .game-container { position: relative; display: inline-block; }
-        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
+        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; }
         .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 300; display: none; }
         .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; }
         .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; }
         .game-over button { padding: 10px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; }
         .game-over button:hover { background: #ff0000; }
         .night-info { position: absolute; top: 10px; right: 10px; color: #0f0; font-size: 14px; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 5px; pointer-events: none; z-index: 100; }
-        .controls-hint { position: absolute; bottom: 10px; right: 10px; color: #888; font-size: 10px; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 5px; pointer-events: none; }
+        .controls-hint { position: absolute; bottom: 10px; right: 10px; color: #888; font-size: 10px; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 5px; pointer-events: none; z-index: 100; }
         .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; background: #000; padding: 20px; border-radius: 10px; z-index: 1000; border: 2px solid #0f0; text-align: center; }
         .loading.hide { display: none; }
         .reset-call-btn {
@@ -35,28 +35,44 @@
         }
         .reset-call-btn.visible { display: block; }
         .reset-call-btn:hover { background: #555; border-color: #888; color: #ccc; }
-        .click-to-start {
-            position: absolute;
+        
+        /* Выбор устройства */
+        .device-selector {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 500;
-            cursor: pointer;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 30px;
         }
-        .click-to-start span {
+        .device-btn {
+            background: #222;
+            border: 2px solid #0f0;
             color: #0f0;
+            padding: 20px 40px;
             font-size: 24px;
             font-family: monospace;
-            border: 2px solid #0f0;
-            padding: 15px 30px;
+            cursor: pointer;
             border-radius: 10px;
-            background: rgba(0,0,0,0.7);
+            transition: all 0.2s;
+            text-align: center;
+            min-width: 200px;
         }
+        .device-btn:hover {
+            background: #0f0;
+            color: #000;
+            transform: scale(1.05);
+        }
+        .device-selector.hide {
+            display: none;
+        }
+        
         .newspaper-overlay {
             position: absolute;
             top: 0;
@@ -157,6 +173,11 @@
     <div class="controls-hint">← → keys | Click camera bar</div>
 </div>
 
+<div class="device-selector" id="deviceSelector">
+    <div class="device-btn" data-device="pc">💻 ПК (мышь)</div>
+    <div class="device-btn" data-device="phone">📱 Телефон (тач)</div>
+</div>
+
 <script>
     // ==================== КОНФИГ МЕНЮ ====================
     const MENU_CONFIG = {
@@ -185,6 +206,11 @@
     const ctx = canvas.getContext('2d');
     canvas.width = 1280;
     canvas.height = 720;
+    
+    // ==================== УСТРОЙСТВО ====================
+    let isPhone = false;
+    let touchStartX = 0;
+    let touchStartMouseX = 640;
     
     // ==================== МЕНЮ ====================
     let inMenu = true;
@@ -244,7 +270,6 @@
         finalOverlay.appendChild(img);
         document.body.appendChild(finalOverlay);
         
-        // Ждём окончания музыки
         const checkMusicInterval = setInterval(() => {
             if (!AudioManager.isPlaying('winning_bells')) {
                 clearInterval(checkMusicInterval);
@@ -254,7 +279,6 @@
             }
         }, 500);
         
-        // Запасной таймер
         finalTimer = setTimeout(() => {
             if (finalMusicPlaying) {
                 location.reload();
@@ -328,7 +352,7 @@
         videoOverlay.addEventListener('click', onEnded);
     }
     
-    // ==================== ГАЗЕТА С ПЛАВНЫМ ПОЯВЛЕНИЕМ ====================
+    // ==================== ГАЗЕТА ====================
     function showNewspaperWithAnimation(callback) {
         if (newspaperOverlay) return;
         
@@ -442,23 +466,8 @@
         if (imagesLoaded === totalImages && cameraImagesLoaded === totalCameraImages) {
             document.getElementById('loading').classList.add('hide');
             document.getElementById('gameContainer').style.display = 'block';
-            showClickToStart();
+            // Ждём выбора устройства
         }
-    }
-    
-    // ==================== КНОПКА ДЛЯ РАЗБЛОКИРОВКИ АУДИО ====================
-    function showClickToStart() {
-        const clickDiv = document.createElement('div');
-        clickDiv.className = 'click-to-start';
-        clickDiv.innerHTML = '<span>▶ CLICK TO START ◀</span>';
-        document.getElementById('gameContainer').appendChild(clickDiv);
-        
-        clickDiv.addEventListener('click', () => {
-            clickDiv.remove();
-            audioUnlocked = true;
-            startMenuMusic();
-            startMenu();
-        });
     }
     
     // ==================== МУЗЫКА В МЕНЮ ====================
@@ -578,7 +587,6 @@
     let lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
     let cameraPanSpeed = 0.4;
     
-    // Для защиты от спама звука при свете
     let leftLightSoundPlayed = false;
     let rightLightSoundPlayed = false;
     
@@ -664,7 +672,6 @@
     const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
     let freddyActive = false, freddyBlink = false, freddyBlinkTimer = 0, roomDark = false;
     
-    // ЗАГРУЖАЕМ ЗВУКИ
     AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { volume: 0.5 });
     AudioManager.load('windowscare', './SFX/windowscare.wav', { volume: 0.6 });
     AudioManager.load('winning_bells', './SFX/winning_bells.wav', { volume: 0.7 });
@@ -731,7 +738,6 @@
             AudioManager.stop('freddy_is_here');
             AudioManager.stop('phone_call');
             
-            // Если это 5 ночь и 6 утра — показываем финал
             if (nightNumber === 5) {
                 showFinal();
             } else {
@@ -920,7 +926,6 @@
             ctx.fillStyle = usageColor; ctx.fillText(usage + "/4", 130, 673);
         }
         
-        // ========== АНИМАТРОНИКИ В ДВЕРЯХ ==========
         const SPRITE_SIZE = 253;
         const DOOR_Y = 280;
         const LEFT_DOOR_X = (0 - bgOffsetX + 50);
@@ -962,10 +967,24 @@
     function handleGameClick(e) {
         if (inMenu) return;
         if (!gameRunning || powerOut) return;
+        
+        let clientX, clientY;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+            e.preventDefault();
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
-        let clickX = (e.clientX - rect.left) * scaleX, clickY = (e.clientY - rect.top) * scaleY;
-        clickX = Math.min(Math.max(clickX, 0), canvas.width); clickY = Math.min(Math.max(clickY, 0), canvas.height);
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clickX = (clientX - rect.left) * scaleX;
+        let clickY = (clientY - rect.top) * scaleY;
+        clickX = Math.min(Math.max(clickX, 0), canvas.width);
+        clickY = Math.min(Math.max(clickY, 0), canvas.height);
         
         if (clickX >= clickZones.cameraBtn.x && clickX <= clickZones.cameraBtn.x + clickZones.cameraBtn.w && clickY >= clickZones.cameraBtn.y && clickY <= clickZones.cameraBtn.y + clickZones.cameraBtn.h && !powerOut) {
             if (cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 2; AudioManager.play('camera_close'); }
@@ -983,25 +1002,21 @@
             return;
         }
         if (!cameraOpen) {
-            // Левая дверь
             if (clickX >= clickZones.leftDoorBtn.x && clickX <= clickZones.leftDoorBtn.x + clickZones.leftDoorBtn.w && clickY >= clickZones.leftDoorBtn.y && clickY <= clickZones.leftDoorBtn.y + clickZones.leftDoorBtn.h) {
                 leftDoor = !leftDoor; leftDoorAnimDir = leftDoor ? 1 : -1; AudioManager.play('door_open_close');
                 leftDoorClosed = leftDoor;
                 checkDoorAttacks(); return;
             }
-            // Левый свет
             if (clickX >= clickZones.leftLightBtn.x && clickX <= clickZones.leftLightBtn.x + clickZones.leftLightBtn.w && clickY >= clickZones.leftLightBtn.y && clickY <= clickZones.leftLightBtn.y + clickZones.leftLightBtn.h) {
                 const wasOff = !leftLight;
                 leftLight = !leftLight;
                 if (leftLight) rightLight = false;
-                
                 if (wasOff && leftLight) {
                     AudioManager.stop('light_click');
                     AudioManager.play('light_click');
                 } else if (!wasOff && !leftLight) {
                     AudioManager.stop('light_click');
                 }
-                
                 if (leftLight && !leftLightSoundPlayed) {
                     const hasAnimAtLeftDoor = (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") ||
                                                (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT");
@@ -1014,25 +1029,21 @@
                 }
                 return;
             }
-            // Правая дверь
             if (clickX >= clickZones.rightDoorBtn.x && clickX <= clickZones.rightDoorBtn.x + clickZones.rightDoorBtn.w && clickY >= clickZones.rightDoorBtn.y && clickY <= clickZones.rightDoorBtn.y + clickZones.rightDoorBtn.h) {
                 rightDoor = !rightDoor; rightDoorAnimDir = rightDoor ? 1 : -1; AudioManager.play('door_open_close');
                 rightDoorClosed = rightDoor;
                 checkDoorAttacks(); return;
             }
-            // Правый свет
             if (clickX >= clickZones.rightLightBtn.x && clickX <= clickZones.rightLightBtn.x + clickZones.rightLightBtn.w && clickY >= clickZones.rightLightBtn.y && clickY <= clickZones.rightLightBtn.y + clickZones.rightLightBtn.h) {
                 const wasOff = !rightLight;
                 rightLight = !rightLight;
                 if (rightLight) leftLight = false;
-                
                 if (wasOff && rightLight) {
                     AudioManager.stop('light_click');
                     AudioManager.play('light_click');
                 } else if (!wasOff && !rightLight) {
                     AudioManager.stop('light_click');
                 }
-                
                 if (rightLight && !rightLightSoundPlayed) {
                     const hasAnimAtRightDoor = (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") ||
                                                 (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") ||
@@ -1049,19 +1060,86 @@
         }
     }
     
-    function handleCanvasClick(e) {
-        if (inMenu) handleMenuClick(e);
-        else handleGameClick(e);
-    }
+    // ==================== ТЕЛЕФОН: ПАНОРАМИРОВАНИЕ ====================
+    let touchStartMouseX = 640;
+    let touchStartX = 0;
     
-    function startGameLoop() {
-        canvas.addEventListener('click', handleCanvasClick);
-        canvas.addEventListener('mousemove', (e) => {
+    function handleTouchStart(e) {
+        if (inMenu) return;
+        if (isPhone) {
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
-            mouseX = (e.clientX - rect.left) * scaleX;
-            mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
+            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
+            touchStartX = touchX;
+            touchStartMouseX = mouseX;
+            e.preventDefault();
+        }
+    }
+    
+    function handleTouchMove(e) {
+        if (inMenu) return;
+        if (isPhone) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const touchX = (e.touches[0].clientX - rect.left) * scaleX;
+            const deltaX = touchX - touchStartX;
+            let newMouseX = touchStartMouseX + deltaX;
+            newMouseX = Math.min(Math.max(newMouseX, 0), canvas.width);
+            mouseX = newMouseX;
+            e.preventDefault();
+        }
+    }
+    
+    function handleTouchEnd(e) {
+        if (inMenu) return;
+        if (isPhone) {
+            e.preventDefault();
+        }
+    }
+    
+    // ==================== ОБЩИЙ КЛИК ====================
+    function handleCanvasClick(e) {
+        if (inMenu) {
+            handleMenuClick(e);
+        } else {
+            handleGameClick(e);
+        }
+    }
+    
+    // ==================== ВЫБОР УСТРОЙСТВА ====================
+    function selectDevice(device) {
+        isPhone = (device === 'phone');
+        document.getElementById('deviceSelector').classList.add('hide');
+        
+        if (isPhone) {
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            canvas.addEventListener('touchend', handleTouchEnd);
+            canvas.addEventListener('touchcancel', handleTouchEnd);
+            document.body.style.touchAction = 'none';
+        }
+        
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isPhone && !inMenu) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                mouseX = (e.clientX - rect.left) * scaleX;
+                mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
+            }
         });
+        
+        startMenuMusic();
+        startMenu();
+    }
+    
+    document.querySelectorAll('.device-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectDevice(btn.dataset.device);
+        });
+    });
+    
+    function startGameLoop() {
         window.addEventListener('keydown', (e) => {
             if (!inMenu && cameraOpen && cameraAnimFrame === 10) {
                 if (e.key === 'ArrowRight') currentCam = (currentCam + 1) % cameraRooms.length;
