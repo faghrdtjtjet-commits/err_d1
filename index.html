@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Courier New', monospace; }
         .game-container { position: relative; display: inline-block; }
-        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; }
+        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; transform-origin: top left; }
         .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 300; display: none; }
         .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; }
         .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; }
@@ -70,6 +70,42 @@
         }
         .device-selector.hide {
             display: none;
+        }
+        
+        /* Ползунок масштаба для телефона */
+        .zoom-control {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #0f0;
+            z-index: 200;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            pointer-events: auto;
+        }
+        .zoom-control.hide {
+            display: none;
+        }
+        .zoom-control label {
+            color: #0f0;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .zoom-control input {
+            width: 120px;
+            cursor: pointer;
+            background: #222;
+            accent-color: #0f0;
+        }
+        .zoom-control span {
+            color: #0f0;
+            font-size: 11px;
+            min-width: 45px;
         }
         
         .newspaper-overlay {
@@ -156,12 +192,21 @@
             max-height: 100%;
             object-fit: contain;
         }
+        
+        /* Контейнер для масштабирования */
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            transform-origin: top left;
+        }
     </style>
 </head>
 <body>
 <div class="loading" id="loading"><div>🎮 FNaF Recreation</div><div style="font-size:12px;margin-top:10px;">Загрузка...</div></div>
 <div class="game-container" id="gameContainer" style="display: none;">
-    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    </div>
     <div class="night-info" id="nightInfo">Night 1 | 12:00 AM</div>
     <div class="reset-call-btn" id="resetCallBtn">Сбросить вызов</div>
     <div class="game-over" id="gameOverScreen">
@@ -174,7 +219,13 @@
 
 <div class="device-selector" id="deviceSelector">
     <div class="device-btn" data-device="pc">💻 ПК (мышь)</div>
-    <div class="device-btn" data-device="phone">📱 Телефон (тач)</div>
+    <div class="device-btn" data-device="phone">📱 Телефон (тач + масштаб)</div>
+</div>
+
+<div class="zoom-control" id="zoomControl">
+    <label>🔍 Масштаб:</label>
+    <input type="range" id="zoomSlider" min="10" max="200" value="100" step="5">
+    <span id="zoomValue">100%</span>
 </div>
 
 <script>
@@ -203,11 +254,34 @@
     // ==================== CANVAS ====================
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const canvasWrapper = document.getElementById('canvasWrapper');
     canvas.width = 1280;
     canvas.height = 720;
     
     // ==================== УСТРОЙСТВО ====================
     let isPhone = false;
+    let currentZoom = 100;
+    
+    // ==================== МАСШТАБ ====================
+    function updateZoom() {
+        const scale = currentZoom / 100;
+        canvasWrapper.style.transform = `scale(${scale})`;
+        canvasWrapper.style.transformOrigin = 'top left';
+        
+        // Корректируем размер контейнера
+        const container = document.querySelector('.game-container');
+        const scaledWidth = 1280 * scale;
+        const scaledHeight = 720 * scale;
+        container.style.width = `${scaledWidth}px`;
+        container.style.height = `${scaledHeight}px`;
+        
+        document.getElementById('zoomValue').innerText = currentZoom + '%';
+    }
+    
+    function setZoom(value) {
+        currentZoom = Math.min(200, Math.max(10, value));
+        updateZoom();
+    }
     
     // ==================== МЕНЮ ====================
     let inMenu = true;
@@ -1115,6 +1189,16 @@
         isPhone = (device === 'phone');
         document.getElementById('deviceSelector').classList.add('hide');
         
+        // Показываем/скрываем ползунок масштаба
+        const zoomControl = document.getElementById('zoomControl');
+        if (isPhone) {
+            zoomControl.classList.remove('hide');
+            setZoom(100);
+        } else {
+            zoomControl.classList.add('hide');
+            setZoom(100);
+        }
+        
         // Убираем все старые слушатели
         canvas.removeEventListener('click', handleCanvasClick);
         canvas.removeEventListener('mousemove', handleMouseMove);
@@ -1149,6 +1233,12 @@
             mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
         }
     }
+    
+    // Настройка ползунка масштаба
+    const zoomSlider = document.getElementById('zoomSlider');
+    zoomSlider.addEventListener('input', (e) => {
+        setZoom(parseInt(e.target.value));
+    });
     
     document.querySelectorAll('.device-btn').forEach(btn => {
         btn.addEventListener('click', () => {
