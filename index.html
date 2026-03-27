@@ -2,839 +2,1106 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PyCraft Launcher - Скачать через Telegram</title>
-    <meta name="description" content="Скачать PyCraft Launcher можно только через Telegram-бота. Безопасный лаунчер для Minecraft.">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Five Nights at Freddy's - FNaF 1</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Courier New', monospace; }
+        .game-container { position: relative; display: inline-block; }
+        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
+        .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 300; display: none; }
+        .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; }
+        .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; }
+        .game-over button { padding: 10px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; }
+        .game-over button:hover { background: #ff0000; }
+        .night-info { position: absolute; top: 10px; right: 10px; color: #0f0; font-size: 14px; background: rgba(0,0,0,0.7); padding: 5px 10px; border-radius: 5px; pointer-events: none; z-index: 100; }
+        .controls-hint { position: absolute; bottom: 10px; right: 10px; color: #888; font-size: 10px; background: rgba(0,0,0,0.5); padding: 3px 8px; border-radius: 5px; pointer-events: none; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; background: #000; padding: 20px; border-radius: 10px; z-index: 1000; border: 2px solid #0f0; text-align: center; }
+        .loading.hide { display: none; }
+        .reset-call-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #444;
+            border: 1px solid #666;
+            color: #aaa;
+            padding: 4px 10px;
+            font-family: monospace;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 150;
+            border-radius: 3px;
+            display: none;
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0c0c0c 100%);
-            color: #ffffff;
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Ограничивающий оверлей */
-        .restricted-overlay {
-            position: fixed;
+        .reset-call-btn.visible { display: block; }
+        .reset-call-btn:hover { background: #555; border-color: #888; color: #ccc; }
+        .click-to-start {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            flex-direction: column;
+            background: rgba(0,0,0,0.8);
+            display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 10000;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            padding: 20px;
-        }
-
-        .restricted-overlay.active {
-            display: flex;
-        }
-
-        .restricted-icon {
-            font-size: 80px;
-            color: #0088cc;
-            margin-bottom: 30px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .restricted-title {
-            font-size: 36px;
-            color: #ffffff;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .restricted-text {
-            font-size: 18px;
-            color: #cccccc;
-            max-width: 600px;
-            margin-bottom: 40px;
-        }
-
-        /* Шапка */
-        .header {
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 1px solid rgba(0, 136, 204, 0.3);
-        }
-
-        .nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: 800;
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo i {
-            font-size: 32px;
-        }
-
-        /* Главный экран */
-        .hero {
-            padding: 180px 20px 100px;
-            text-align: center;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero .tagline {
-            font-size: 20px;
-            color: #aaaaaa;
-            margin-bottom: 40px;
-        }
-
-        .version-badge {
-            display: inline-block;
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            color: #ffffff;
-            padding: 8px 24px;
-            border-radius: 25px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            font-size: 18px;
-        }
-
-        /* Кнопки */
-        .buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 40px 0;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            padding: 18px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            min-width: 240px;
-            justify-content: center;
-            border: none;
+            z-index: 500;
             cursor: pointer;
         }
-
-        .btn-telegram {
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            color: white;
-            font-size: 20px;
-            padding: 20px 50px;
+        .click-to-start span {
+            color: #0f0;
+            font-size: 24px;
+            font-family: monospace;
+            border: 2px solid #0f0;
+            padding: 15px 30px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.7);
         }
-
-        .btn-telegram:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 136, 204, 0.3);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-5px);
-        }
-
-        /* Карточка скачивания */
-        .download-card {
-            background: rgba(0, 136, 204, 0.1);
-            border: 2px solid rgba(0, 136, 204, 0.3);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            margin: 50px auto;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        .download-card h3 {
-            font-size: 28px;
-            margin-bottom: 20px;
-            color: #00aced;
-        }
-
-        .download-card p {
-            color: #cccccc;
-            margin-bottom: 30px;
-            font-size: 16px;
-        }
-
-        .telegram-qr {
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(45deg, #0088cc, #00aced);
-            border-radius: 15px;
-            margin: 30px auto;
+        .newspaper-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 80px;
-            color: white;
-        }
-
-        .instruction-steps {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            padding: 30px;
-            margin: 40px 0;
-            text-align: left;
-        }
-
-        .instruction-steps ol {
-            margin-left: 20px;
-            color: #cccccc;
-        }
-
-        .instruction-steps li {
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-
-        .instruction-steps strong {
-            color: #00aced;
-        }
-
-        /* Секции */
-        section {
-            padding: 100px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 36px;
-            margin-bottom: 60px;
-            color: #ffffff;
-        }
-
-        /* Особенности */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 50px;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: #0088cc;
-            box-shadow: 0 20px 40px rgba(0, 136, 204, 0.2);
-        }
-
-        .feature-icon {
-            font-size: 40px;
-            margin-bottom: 20px;
-            color: #00aced;
-        }
-
-        .feature-card h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            color: #ffffff;
-        }
-
-        .feature-card p {
-            color: #aaaaaa;
-            font-size: 15px;
-        }
-
-        /* Футер */
-        .footer {
-            background: rgba(0, 0, 0, 0.95);
-            padding: 60px 20px 30px;
-            border-top: 1px solid rgba(0, 136, 204, 0.3);
-            margin-top: 100px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-        }
-
-        .footer-section h4 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #00aced;
-        }
-
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 10px;
-        }
-
-        .footer-links a {
-            color: #aaaaaa;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: #00aced;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-link {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
             align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .social-link:hover {
-            background: #0088cc;
-            transform: translateY(-3px);
-        }
-
-        .copyright {
-            text-align: center;
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            color: #666666;
-            font-size: 14px;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 36px;
-            }
-            
-            .hero .tagline {
-                font-size: 18px;
-            }
-            
-            .btn {
-                min-width: 100%;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            section {
-                padding: 60px 20px;
-            }
-            
-            .section-title {
-                font-size: 28px;
-            }
-            
-            .download-card {
-                padding: 20px;
-            }
-            
-            .restricted-title {
-                font-size: 28px;
-            }
-        }
-
-        /* Анимации */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .hidden {
+            z-index: 400;
             opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
         }
-
-        /* Модальное окно */
-        .modal {
-            display: none;
+        .newspaper-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .newspaper-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            cursor: pointer;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 450;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .video-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .video-overlay video {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .jumpscare-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 10001;
+            background: #000;
+            display: flex;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(10px);
+            z-index: 1000;
+            cursor: pointer;
         }
-
-        .modal.active {
+        .jumpscare-overlay img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .final-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
             display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
         }
-
-        .modal-content {
-            background: rgba(20, 20, 20, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            border: 2px solid rgba(0, 136, 204, 0.5);
-            text-align: center;
-        }
-
-        .modal-icon {
-            font-size: 60px;
-            color: #00aced;
-            margin-bottom: 20px;
-        }
-
-        .modal h3 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #ffffff;
-        }
-
-        .modal p {
-            color: #cccccc;
-            margin-bottom: 30px;
-            line-height: 1.5;
+        .final-overlay img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
-    <!-- Ограничивающий оверлей -->
-    <div class="restricted-overlay" id="restrictedOverlay">
-        <div class="restricted-icon">
-            <i class="fab fa-telegram"></i>
-        </div>
-        <h2 class="restricted-title">Скачивание через Telegram</h2>
-        <p class="restricted-text">PyCraft Launcher доступен только через Telegram-бота для вашей безопасности и удобства поддержки.</p>
-        <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
-            <i class="fab fa-telegram"></i> Перейти к боту @jjoasuohfshaisfhaiobot
-        </a>
-        <button class="btn btn-secondary" onclick="closeRestricted()" style="margin-top: 20px;">
-            <i class="fas fa-times"></i> Понятно
-        </button>
+<div class="loading" id="loading"><div>🎮 FNaF Recreation</div><div style="font-size:12px;margin-top:10px;">Загрузка...</div></div>
+<div class="game-container" id="gameContainer" style="display: none;">
+    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    <div class="night-info" id="nightInfo">Night 1 | 12:00 AM</div>
+    <div class="reset-call-btn" id="resetCallBtn">Сбросить вызов</div>
+    <div class="game-over" id="gameOverScreen">
+        <h1>⚠️ GAME OVER ⚠️</h1>
+        <p id="gameOverText">You got caught!</p>
+        <button id="restartBtn">Restart Night</button>
     </div>
+    <div class="controls-hint">← → keys | Click camera bar</div>
+</div>
 
-    <!-- Модальное окно предупреждения -->
-    <div class="modal" id="warningModal">
-        <div class="modal-content">
-            <div class="modal-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h3>Внимание! Безопасность</h3>
-            <p>Скачивание PyCraft доступно только через Telegram-бота. Это защищает вас от:</p>
-            <ul style="text-align: left; margin: 20px 0; color: #cccccc;">
-                <li>✅ Поддельных версий лаунчера</li>
-                <li>✅ Вирусов и вредоносного ПО</li>
-                <li>✅ Неавторизованных дистрибутивов</li>
-                <li>✅ Устаревших версий</li>
-            </ul>
-            <p>Перейдите к боту для получения оригинального и безопасного установщика.</p>
-            <div class="buttons">
-                <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
-                    <i class="fab fa-telegram"></i> Открыть бота
-                </a>
-                <button class="btn btn-secondary" onclick="closeModal()">
-                    Закрыть
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Шапка -->
-    <header class="header">
-        <nav class="nav">
-            <a href="#" class="logo">
-                <i class="fab fa-telegram"></i>
-                PyCraft
-            </a>
-            <div style="color: #00aced; font-weight: bold;">
-                <i class="fas fa-lock"></i> Скачивание через Telegram
-            </div>
-        </nav>
-    </header>
-
-    <!-- Главный экран -->
-    <main class="hero animate">
-        <div class="version-badge">Версия 2026 • Только через Telegram</div>
-        <h1>PyCraft Launcher</h1>
-        <p class="tagline">Скачивание доступно исключительно через Telegram-бота для максимальной безопасности</p>
-        
-        <div class="download-card">
-            <h3><i class="fab fa-telegram"></i> Telegram-бот @jjoasuohfshaisfhaiobot</h3>
-            <p>Нажмите кнопку ниже, чтобы перейти к боту и получить ссылку на скачивание</p>
-            
-            <div class="buttons">
-                <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram">
-                    <i class="fab fa-telegram"></i> Получить ссылку в боте
-                </a>
-            </div>
-            
-            <div class="telegram-qr">
-                <i class="fab fa-telegram"></i>
-            </div>
-            
-            <div class="instruction-steps">
-                <h4 style="color: #00aced; margin-bottom: 20px;"><i class="fas fa-list-ol"></i> Как скачать:</h4>
-                <ol>
-                    <li>Нажмите кнопку "Получить ссылку в боте"</li>
-                    <li>В Telegram откроется бот <strong>@jjoasuohfshaisfhaiobot</strong></li>
-                    <li>Напишите боту команду <strong>/download</strong> или <strong>/start</strong></li>
-                    <li>Получите прямую ссылку на скачивание</li>
-                    <li>Скачайте и запустите установщик</li>
-                </ol>
-            </div>
-            
-            <p style="color: #ff6b6b; font-weight: bold; margin-top: 20px;">
-                <i class="fas fa-exclamation-circle"></i> Внимание: Скачивание с других сайтов может быть опасным!
-            </p>
-        </div>
-    </main>
-
-    <!-- Особенности -->
-    <section class="animate hidden">
-        <h2 class="section-title">🛡️ Защита через Telegram</h2>
-        
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <h3>Безопасность</h3>
-                <p>Только оригинальные файлы через авторизованного бота. Защита от поддельных версий и вирусов.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-headset"></i>
-                </div>
-                <h3>Поддержка в боте</h3>
-                <p>Мгновенная помощь в Telegram. Ответы на вопросы, решение проблем, инструкции в одном месте.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-sync-alt"></i>
-                </div>
-                <h3>Автообновления</h3>
-                <p>Бот уведомляет о новых версиях и предоставляет обновления. Всегда актуальная версия лаунчера.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-key"></i>
-                </div>
-                <h3>Верификация</h3>
-                <p>Проверенные файлы с цифровой подписью. Гарантия подлинности и отсутствия изменений.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h3>Обратная связь</h3>
-                <p>Прямой канал связи с разработчиками. Сообщайте об ошибках и предлагайте улучшения через бота.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-history"></i>
-                </div>
-                <h3>История версий</h3>
-                <p>Доступ к предыдущим версиям через бота. Возможность отката при необходимости.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Преимущества -->
-    <section class="animate hidden" style="background: rgba(0, 136, 204, 0.05); border-radius: 30px;">
-        <h2 class="section-title">✅ Почему через Telegram?</h2>
-        
-        <div class="features-grid">
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
-                    <i class="fas fa-bolt"></i>
-                </div>
-                <h3>Мгновенно</h3>
-                <p>Ссылка на скачивание в пару кликов</p>
-            </div>
-            
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
-                    <i class="fas fa-mobile-alt"></i>
-                </div>
-                <h3>На всех устройствах</h3>
-                <p>Telegram доступен везде</p>
-            </div>
-            
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
-                    <i class="fas fa-history"></i>
-                </div>
-                <h3>История в чате</h3>
-                <p>Все ссылки сохраняются</p>
-            </div>
-            
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; color: #00aced; margin-bottom: 20px;">
-                    <i class="fas fa-user-check"></i>
-                </div>
-                <h3>Персонализация</h3>
-                <p>Бот узнает вас</p>
-            </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 50px;">
-            <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="btn btn-telegram" style="font-size: 20px;">
-                <i class="fab fa-telegram"></i> Начать общение с ботом
-            </a>
-        </div>
-    </section>
-
-    <!-- FAQ -->
-    <section class="animate hidden">
-        <h2 class="section-title">❓ Частые вопросы</h2>
-        
-        <div style="max-width: 800px; margin: 0 auto;">
-            <div class="feature-card" style="margin-bottom: 20px;">
-                <h3><i class="fas fa-question-circle" style="color: #00aced;"></i> Почему нельзя скачать напрямую с сайта?</h3>
-                <p>Мы защищаем пользователей от поддельных версий, вирусов и устаревших дистрибутивов. Через Telegram мы гарантируем подлинность и безопасность файлов.</p>
-            </div>
-            
-            <div class="feature-card" style="margin-bottom: 20px;">
-                <h3><i class="fas fa-robot" style="color: #00aced;"></i> Что делать, если бот не отвечает?</h3>
-                <p>Бот работает 24/7. Если возникли проблемы, проверьте правильность написания: <strong>@jjoasuohfshaisfhaiobot</strong> или напишите в поддержку.</p>
-            </div>
-            
-            <div class="feature-card" style="margin-bottom: 20px;">
-                <h3><i class="fas fa-download" style="color: #00aced;"></i> Какие команды есть у бота?</h3>
-                <p>Основные команды: <code>/start</code> - начало работы, <code>/download</code> - получить ссылку, <code>/help</code> - помощь, <code>/install</code> - инструкция установки.</p>
-            </div>
-            
-            <div class="feature-card" style="margin-bottom: 20px;">
-                <h3><i class="fas fa-shield-alt" style="color: #00aced;"></i> Это безопасно?</h3>
-                <p>Да! Telegram шифрует все сообщения, а файлы проверяются на вирусы. Вы получаете оригинальный установщик напрямую от разработчиков.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Футер -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>PyCraft Launcher</h4>
-                <p style="color: #aaaaaa; margin-bottom: 20px;">Скачивание только через Telegram для вашей безопасности.</p>
-                <div class="social-links">
-                    <a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank" class="social-link">
-                        <i class="fab fa-telegram"></i>
-                    </a>
-                    <a href="#" class="social-link">
-                        <i class="fab fa-discord"></i>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Telegram</h4>
-                <ul class="footer-links">
-                    <li><a href="https://t.me/jjoasuohfshaisfhaiobot" target="_blank">Бот для скачивания</a></li>
-                    <li><a href="#">Канал новостей</a></li>
-                    <li><a href="#">Чат поддержки</a></li>
-                    <li><a href="#">Сообщество</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Помощь</h4>
-                <ul class="footer-links">
-                    <li><a href="#" onclick="showWarning()">Инструкция скачивания</a></li>
-                    <li><a href="#" onclick="showWarning()">Установка</a></li>
-                    <li><a href="#" onclick="showWarning()">Решение проблем</a></li>
-                    <li><a href="#" onclick="showWarning()">FAQ</a></li>
-                </ul>
-            </div>
-            
-            <div class="footer-section">
-                <h4>Безопасность</h4>
-                <ul class="footer-links">
-                    <li><a href="#" onclick="showWarning()">Проверка файлов</a></li>
-                    <li><a href="#" onclick="showWarning()">Антивирусная проверка</a></li>
-                    <li><a href="#" onclick="showWarning()">Гарантии</a></li>
-                    <li><a href="#" onclick="showWarning()">Отчеты безопасности</a></li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="copyright">
-            <p>© 2024 PyCraft Launcher. Скачивание доступно только через Telegram-бота @jjoasuohfshaisfhaiobot</p>
-            <p style="margin-top: 10px; font-size: 12px; color: #444;">
-                <i class="fas fa-exclamation-triangle"></i> Не скачивайте лаунчер с других источников!
-            </p>
-        </div>
-    </footer>
-
-    <script>
-        // Показать ограничивающий оверлей при попытке скачать
-        function showRestrictedOverlay() {
-            document.getElementById('restrictedOverlay').classList.add('active');
-            return false;
+<script>
+    // ==================== КОНФИГ МЕНЮ ====================
+    const MENU_CONFIG = {
+        textures: {
+            game_title: "./Sprites/game_title.png",
+            newgame_btn: "./Sprites/newgame_button.png",
+            the_menu: "./Sprites/the_menu.png",
+            intro: "./Sprites/intro.png",
+            main_menu: "./Sprites/main_menu.png"
+        },
+        positions: {
+            game_title: { x: 58, y: 63, w: 200, h: 200 },
+            newgame_btn: { x: 55, y: 506, w: 300, h: 45 },
+            the_menu: { x: 0, y: 0, w: 1280, h: 720 },
+            intro: { x: 0, y: 0, w: 1280, h: 720 },
+            main_menu: { x: 0, y: 0, w: 1280, h: 720 }
+        },
+        settings: {
+            newspaper_duration: 5,
+            auto_close: true
         }
-
-        // Закрыть оверлей
-        function closeRestricted() {
-            document.getElementById('restrictedOverlay').classList.remove('active');
+    };
+    
+    // ==================== CANVAS ====================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1280;
+    canvas.height = 720;
+    
+    // ==================== МЕНЮ ====================
+    let inMenu = true;
+    let newspaperOverlay = null;
+    let videoOverlay = null;
+    let audioUnlocked = false;
+    let finalOverlay = null;
+    let finalMusicPlaying = false;
+    let finalTimer = null;
+    
+    // ==================== АУДИО ====================
+    const AudioManager = {
+        sounds: {},
+        load(name, src, options = {}) {
+            const audio = new Audio(src);
+            audio.volume = options.volume ?? 1;
+            audio.loop = options.loop ?? false;
+            this.sounds[name] = audio;
+        },
+        play(name, restart = true) {
+            const sound = this.sounds[name];
+            if (!sound) return;
+            if (restart) sound.currentTime = 0;
+            sound.play().catch(e => console.warn(`Audio:`, e));
+        },
+        stop(name) {
+            const sound = this.sounds[name];
+            if (sound) { sound.pause(); sound.currentTime = 0; }
+        },
+        stopAll() {
+            for (const key in this.sounds) {
+                this.stop(key);
+            }
+        },
+        isPlaying(name) {
+            const sound = this.sounds[name];
+            return sound && !sound.paused && sound.currentTime > 0;
+        },
+        setVolume(name, volume) {
+            const sound = this.sounds[name];
+            if (sound) sound.volume = Math.max(0, Math.min(1, volume));
         }
-
-        // Показать модальное окно
-        function showWarning() {
-            document.getElementById('warningModal').classList.add('active');
-            return false;
-        }
-
-        // Закрыть модальное окно
-        function closeModal() {
-            document.getElementById('warningModal').classList.remove('active');
-        }
-
-        // Перехват всех попыток скачать
-        document.addEventListener('DOMContentLoaded', function() {
-            // Блокировка всех ссылок, кроме Telegram
-            document.querySelectorAll('a').forEach(link => {
-                if (!link.href.includes('t.me') && !link.href.startsWith('#')) {
-                    link.addEventListener('click', function(e) {
-                        if (this.textContent.toLowerCase().includes('скачать') || 
-                            this.textContent.toLowerCase().includes('download')) {
-                            e.preventDefault();
-                            showRestrictedOverlay();
-                        }
-                    });
-                }
-            });
-
-            // Показать предупреждение при загрузке
-            setTimeout(() => {
-                showWarning();
-            }, 2000);
-
-            // Анимации при скролле
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate');
-                        entry.target.classList.remove('hidden');
-                    }
-                });
-            }, observerOptions);
-
-            document.querySelectorAll('section').forEach(section => {
-                observer.observe(section);
-            });
-
-            // Кнопка "Получить ссылку"
-            document.querySelector('.btn-telegram').addEventListener('click', function(e) {
-                // Отслеживание перехода к боту
+    };
+    
+    // ==================== ФИНАЛ ====================
+    function showFinal() {
+        if (finalOverlay) return;
+        
+        AudioManager.stopAll();
+        AudioManager.play('winning_bells');
+        finalMusicPlaying = true;
+        
+        finalOverlay = document.createElement('div');
+        finalOverlay.className = 'final-overlay';
+        const img = document.createElement('img');
+        img.src = MENU_CONFIG.textures.main_menu;
+        finalOverlay.appendChild(img);
+        document.body.appendChild(finalOverlay);
+        
+        // Ждём окончания музыки
+        const checkMusicInterval = setInterval(() => {
+            if (!AudioManager.isPlaying('winning_bells')) {
+                clearInterval(checkMusicInterval);
                 setTimeout(() => {
-                    alert('Если бот не открылся, перейдите по ссылке: https://t.me/jjoasuohfshaisfhaiobot\n\nНапишите боту команду /download');
+                    location.reload();
                 }, 500);
-            });
-
-            // Сообщение при закрытии страницы
-            window.addEventListener('beforeunload', function(e) {
-                return "Не забудьте скачать PyCraft через Telegram-бота!";
-            });
+            }
+        }, 500);
+        
+        // Запасной таймер
+        finalTimer = setTimeout(() => {
+            if (finalMusicPlaying) {
+                location.reload();
+            }
+        }, 12000);
+    }
+    
+    // ==================== СКРИМЕР ====================
+    function showJumpscare(animatronic, callback) {
+        const overlay = document.createElement('div');
+        overlay.className = 'jumpscare-overlay';
+        const img = document.createElement('img');
+        const jumpscarePaths = {
+            bonnie: './Sprites/bon.png',
+            chica: './Sprites/chik.png',
+            foxy: './Sprites/fox.png',
+            freddy: './Sprites/fred.png'
+        };
+        img.src = jumpscarePaths[animatronic];
+        img.style.transform = 'scale(1.5)';
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+        
+        overlay.addEventListener('click', () => {
+            overlay.remove();
+            if (callback) callback();
         });
-
-        // Сообщение о важности Telegram
-        console.log('%c⚠️ ВНИМАНИЕ! ⚠️', 'color: red; font-size: 24px; font-weight: bold;');
-        console.log('%cPyCraft Launcher доступен ТОЛЬКО через Telegram-бота:', 'color: orange; font-size: 16px;');
-        console.log('%chttps://t.me/jjoasuohfshaisfhaiobot', 'color: #0088cc; font-size: 18px; font-weight: bold;');
-        console.log('%cНе скачивайте с других источников!', 'color: red; font-size: 14px;');
-    </script>
+        
+        setTimeout(() => {
+            if (document.body.contains(overlay)) {
+                overlay.remove();
+                if (callback) callback();
+            }
+        }, 3000);
+    }
+    
+    // ==================== ВИДЕО 6 AM ====================
+    function showSixAmVideo(callback) {
+        if (videoOverlay) return;
+        
+        AudioManager.stop('office_ambience');
+        AudioManager.stop('mid_ambience');
+        AudioManager.stop('powerdown');
+        AudioManager.stop('freddy_is_here');
+        AudioManager.stop('phone_call');
+        
+        videoOverlay = document.createElement('div');
+        videoOverlay.className = 'video-overlay';
+        const video = document.createElement('video');
+        video.src = './Sprites/6am.mp4';
+        video.autoplay = true;
+        video.muted = false;
+        video.loop = false;
+        video.volume = 0.6;
+        
+        videoOverlay.appendChild(video);
+        document.getElementById('gameContainer').appendChild(videoOverlay);
+        setTimeout(() => videoOverlay.classList.add('active'), 10);
+        
+        const onEnded = () => {
+            video.pause();
+            videoOverlay.classList.remove('active');
+            setTimeout(() => {
+                videoOverlay.remove();
+                videoOverlay = null;
+                if (callback) callback();
+            }, 300);
+        };
+        
+        video.addEventListener('ended', onEnded);
+        videoOverlay.addEventListener('click', onEnded);
+    }
+    
+    // ==================== ГАЗЕТА С ПЛАВНЫМ ПОЯВЛЕНИЕМ ====================
+    function showNewspaperWithAnimation(callback) {
+        if (newspaperOverlay) return;
+        
+        newspaperOverlay = document.createElement('div');
+        newspaperOverlay.className = 'newspaper-overlay';
+        const img = document.createElement('img');
+        img.className = 'newspaper-image';
+        img.src = MENU_CONFIG.textures.intro;
+        newspaperOverlay.appendChild(img);
+        document.getElementById('gameContainer').appendChild(newspaperOverlay);
+        setTimeout(() => newspaperOverlay.classList.add('active'), 10);
+        
+        const closeNewspaper = () => {
+            newspaperOverlay.classList.remove('active');
+            setTimeout(() => {
+                newspaperOverlay.remove();
+                newspaperOverlay = null;
+                if (callback) callback();
+            }, 500);
+        };
+        
+        img.addEventListener('click', closeNewspaper);
+        if (MENU_CONFIG.settings.auto_close) {
+            setTimeout(closeNewspaper, MENU_CONFIG.settings.newspaper_duration * 1000);
+        }
+    }
+    
+    // ==================== ЗАГРУЗКА ИЗОБРАЖЕНИЙ ====================
+    const images = {};
+    let imagesLoaded = 0;
+    let totalImages = 0;
+    
+    const gameTextures = {
+        officeBg: './Sprites/room_office/office_place_fix.png',
+        officePowerOut: './Sprites/room_office/game_over.png',
+        officeFreddyHere: './Sprites/room_office/freddy_is_here.png',
+        leftDoorLit: './Sprites/room_office/left_door_lit.png',
+        rightDoorLit: './Sprites/room_office/right_door_lit.png',
+        officeDoors: './Sprites/room_office/office_doors.png',
+        leftDefault: './Sprites/office_buttons/left_side/left_button_default.png',
+        leftBothOn: './Sprites/office_buttons/left_side/left_button_both_on.png',
+        leftDoorOn: './Sprites/office_buttons/left_side/left_button_door_on.png',
+        leftLightOn: './Sprites/office_buttons/left_side/left_button_light_on.png',
+        rightDefault: './Sprites/office_buttons/right_side/right_button_default.png',
+        rightBothOn: './Sprites/office_buttons/right_side/right_button_both_on.png',
+        rightDoorOn: './Sprites/office_buttons/right_side/right_button_door_on.png',
+        rightLightOn: './Sprites/office_buttons/right_side/right_button_light_on.png',
+        cameraRedDot: './Sprites/camera_ui/camera_red_dot.png',
+        cameraBorder: './Sprites/camera_ui/camera_border.png',
+        cameraCams: './Sprites/camera_ui/camera_cams.png',
+        cameraLift: './Sprites/camera_ui/camera_lift.png',
+        cameraBarOffice: './Sprites/office_ui/camera_bar.png',
+        cameraBarMenu: './Sprites/office_ui/camera_bar_unused.png',
+        bonnie: './Sprites/bon.png',
+        chica: './Sprites/chik.png',
+        foxy: './Sprites/fox.png',
+        freddy: './Sprites/fred.png',
+        staticScreen: './Sprites/static_screen.png'
+    };
+    
+    const menuTextures = {
+        game_title: MENU_CONFIG.textures.game_title,
+        newgame_btn: MENU_CONFIG.textures.newgame_btn,
+        the_menu: MENU_CONFIG.textures.the_menu,
+        intro: MENU_CONFIG.textures.intro,
+        main_menu: MENU_CONFIG.textures.main_menu
+    };
+    
+    const allTextures = { ...gameTextures, ...menuTextures };
+    
+    for (const [key, path] of Object.entries(allTextures)) {
+        totalImages++;
+        images[key] = new Image();
+        images[key].onload = () => { imagesLoaded++; checkAllLoaded(); };
+        images[key].onerror = () => { imagesLoaded++; checkAllLoaded(); };
+        images[key].src = path;
+    }
+    
+    const cameraImages = {};
+    let cameraImagesLoaded = 0;
+    let totalCameraImages = 0;
+    
+    const CAMERA_NAMES = ["Show Stage", "Backstage", "Dining Area", "East Hall", "East Hall Corner",
+        "Pirates Cove", "Restrooms", "Supply Closet", "West Hall", "West Hall Corner"];
+    
+    const cameraBackgrounds = {
+        "Show Stage": "./Sprites/rooms/show_stage/defined_show_stage.png",
+        "Backstage": "./Sprites/rooms/backstage/defined_backstage.png",
+        "Dining Area": "./Sprites/rooms/dining_area/defined_dining_area.png",
+        "East Hall": "./Sprites/rooms/east_hall/defined_east_hall.png",
+        "East Hall Corner": "./Sprites/rooms/east_hall/defined_east_hall_corner.png",
+        "Pirates Cove": "./Sprites/rooms/pirates_cove/defined_pirates_cove.png",
+        "Restrooms": "./Sprites/rooms/restrooms/defined_restrooms.png",
+        "Supply Closet": "./Sprites/rooms/supply_closet/defined_supply_closet.png",
+        "West Hall": "./Sprites/rooms/west_hall/defined_west_hall.png",
+        "West Hall Corner": "./Sprites/rooms/west_hall/defined_west_hall_corner.png"
+    };
+    
+    function loadCameraBackgrounds() {
+        totalCameraImages = CAMERA_NAMES.length;
+        for (const camera of CAMERA_NAMES) {
+            const path = cameraBackgrounds[camera];
+            const img = new Image();
+            img.onload = () => { cameraImages[camera] = img; cameraImagesLoaded++; checkAllLoaded(); };
+            img.onerror = () => { cameraImagesLoaded++; checkAllLoaded(); };
+            img.src = path;
+        }
+    }
+    
+    function checkAllLoaded() {
+        if (imagesLoaded === totalImages && cameraImagesLoaded === totalCameraImages) {
+            document.getElementById('loading').classList.add('hide');
+            document.getElementById('gameContainer').style.display = 'block';
+            showClickToStart();
+        }
+    }
+    
+    // ==================== КНОПКА ДЛЯ РАЗБЛОКИРОВКИ АУДИО ====================
+    function showClickToStart() {
+        const clickDiv = document.createElement('div');
+        clickDiv.className = 'click-to-start';
+        clickDiv.innerHTML = '<span>▶ CLICK TO START ◀</span>';
+        document.getElementById('gameContainer').appendChild(clickDiv);
+        
+        clickDiv.addEventListener('click', () => {
+            clickDiv.remove();
+            audioUnlocked = true;
+            startMenuMusic();
+            startMenu();
+        });
+    }
+    
+    // ==================== МУЗЫКА В МЕНЮ ====================
+    let menuMusicStarted = false;
+    
+    function startMenuMusic() {
+        if (menuMusicStarted) return;
+        AudioManager.load('menu_music', './SFX/FNAF1 sound/darkness music.wav', { loop: true, volume: 0.5 });
+        AudioManager.play('menu_music');
+        menuMusicStarted = true;
+    }
+    
+    function stopMenuMusic() {
+        if (AudioManager.isPlaying('menu_music')) {
+            AudioManager.stop('menu_music');
+        }
+        menuMusicStarted = false;
+    }
+    
+    // ==================== ЗВОНОК ====================
+    let callTimeout = null;
+    let callActive = false;
+    
+    function startPhoneCall(nightNumber) {
+        stopPhoneCall();
+        if (nightNumber >= 6) return;
+        const callFile = `./SFX/voiceover${nightNumber}.wav`;
+        AudioManager.load('phone_call', callFile, { volume: 0.7 });
+        callTimeout = setTimeout(() => {
+            AudioManager.play('phone_call');
+            callActive = true;
+            updateCallButtonVisibility();
+        }, 500);
+    }
+    
+    function stopPhoneCall() {
+        if (callTimeout) { clearTimeout(callTimeout); callTimeout = null; }
+        if (AudioManager.isPlaying('phone_call')) AudioManager.stop('phone_call');
+        callActive = false;
+        updateCallButtonVisibility();
+    }
+    
+    function resetPhoneCall() {
+        if (callActive || callTimeout) stopPhoneCall();
+    }
+    
+    function updateCallButtonVisibility() {
+        const btn = document.getElementById('resetCallBtn');
+        const isVisible = !inMenu && !newspaperOverlay && (callActive || callTimeout !== null);
+        if (isVisible) btn.classList.add('visible');
+        else btn.classList.remove('visible');
+    }
+    
+    // ==================== СТАТИЧЕСКИЙ ЭФФЕКТ ====================
+    let staticFrame = 0;
+    let staticTimer = 0;
+    const STATIC_FRAME_COUNT = 8;
+    const STATIC_FRAME_WIDTH = 1280;
+    const STATIC_FRAME_HEIGHT = 720;
+    let cameraStaticIntensity = 0.25;
+    let cameraStaticTimer = 0;
+    
+    function updateStaticEffect() {
+        staticTimer++;
+        if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; }
+    }
+    
+    function drawStaticOverlay(intensity) {
+        if (!images.staticScreen || intensity <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = intensity;
+        const yOffset = staticFrame * STATIC_FRAME_HEIGHT;
+        ctx.drawImage(images.staticScreen, 0, yOffset, STATIC_FRAME_WIDTH, STATIC_FRAME_HEIGHT, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+    
+    // ==================== КОМНАТЫ И АНИМАТРОНИКИ ====================
+    let cameraRooms = CAMERA_NAMES.map(name => ({ name: name, panX: 0, panDir: 1, maxPan: 320 }));
+    
+    const minimapZones = [
+        { name: "Show Stage", x: 920, y: 295, w: 70, h: 40 }, { name: "Dining Area", x: 900, y: 350, w: 70, h: 40 },
+        { name: "Backstage", x: 795, y: 380, w: 70, h: 40 }, { name: "Pirates Cove", x: 870, y: 430, w: 70, h: 40 },
+        { name: "Supply Closet", x: 835, y: 530, w: 70, h: 40 }, { name: "Restrooms", x: 1135, y: 380, w: 70, h: 40 },
+        { name: "East Hall", x: 1025, y: 545, w: 70, h: 40 }, { name: "East Hall Corner", x: 1025, y: 585, w: 70, h: 40 },
+        { name: "West Hall", x: 920, y: 545, w: 70, h: 40 }, { name: "West Hall Corner", x: 920, y: 585, w: 70, h: 40 }
+    ];
+    
+    const cameraPositions = {
+        "Show Stage": { bonnie: { x: 280, y: 150 }, chica: { x: 900, y: 150 }, freddy: { x: 590, y: 110 } },
+        "Backstage": { bonnie: { x: 500, y: 180 }, freddy: { x: 750, y: 150 } },
+        "Dining Area": { bonnie: { x: 400, y: 170 }, chica: { x: 850, y: 170 }, freddy: { x: 620, y: 130 } },
+        "East Hall": { chica: { x: 600, y: 230 }, foxy: { x: 450, y: 230 }, freddy: { x: 750, y: 210 } },
+        "East Hall Corner": { chica: { x: 700, y: 210 }, foxy: { x: 550, y: 220 }, freddy: { x: 800, y: 190 } },
+        "Pirates Cove": { foxy: { x: 550, y: 210 } },
+        "Restrooms": { chica: { x: 600, y: 200 }, freddy: { x: 780, y: 170 } },
+        "Supply Closet": { bonnie: { x: 500, y: 190 } },
+        "West Hall": { bonnie: { x: 600, y: 230 }, freddy: { x: 750, y: 210 } },
+        "West Hall Corner": { bonnie: { x: 700, y: 210 }, freddy: { x: 800, y: 190 } }
+    };
+    
+    const moveMap = {
+        bonnie: { "Show Stage": ["Dining Area", "West Hall"], "Dining Area": ["Show Stage", "West Hall", "Supply Closet"], "West Hall": ["Dining Area", "West Hall Corner"], "West Hall Corner": ["West Hall", "Office Left"], "Supply Closet": ["Dining Area"], "Office Left": ["West Hall Corner"] },
+        chica: { "Show Stage": ["Dining Area", "East Hall"], "Dining Area": ["Show Stage", "East Hall", "Restrooms"], "East Hall": ["Dining Area", "East Hall Corner"], "East Hall Corner": ["East Hall", "Office Right"], "Restrooms": ["Dining Area"], "Office Right": ["East Hall Corner"] },
+        foxy: { "Pirates Cove": ["East Hall"], "East Hall": ["East Hall Corner", "Dining Area"], "East Hall Corner": ["East Hall", "Office Right"], "Dining Area": ["East Hall"], "Office Right": ["East Hall Corner"] },
+        freddy: { "Show Stage": ["Dining Area"], "Dining Area": ["East Hall", "West Hall", "Restrooms", "Supply Closet"], "East Hall": ["East Hall Corner", "Dining Area"], "East Hall Corner": ["East Hall", "Office Right"], "West Hall": ["West Hall Corner", "Dining Area"], "West Hall Corner": ["West Hall", "Office Left"], "Restrooms": ["Dining Area"], "Supply Closet": ["Dining Area"], "Office Left": ["West Hall Corner"], "Office Right": ["East Hall Corner"] }
+    };
+    
+    let animatronics = {
+        bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
+        chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
+        foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
+        freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
+    };
+    
+    let animatronicsLastUpdate = Date.now();
+    let leftDoorClosed = false, rightDoorClosed = false, jumpscareTriggered = false;
+    let lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
+    let cameraPanSpeed = 0.4;
+    
+    // Для защиты от спама звука при свете
+    let leftLightSoundPlayed = false;
+    let rightLightSoundPlayed = false;
+    
+    function updateAnimatronics() {
+        if (!gameRunning || powerOut || jumpscareTriggered) return;
+        const now = Date.now();
+        if (now - animatronicsLastUpdate < 1000) return;
+        animatronicsLastUpdate = now;
+        for (let [name, anim] of Object.entries(animatronics)) {
+            if (!anim.active) continue;
+            const chance = anim.aiLevel / 80;
+            if (Math.random() > chance) continue;
+            const moves = moveMap[name][anim.location];
+            if (!moves || moves.length === 0) continue;
+            const newLoc = moves[Math.floor(Math.random() * moves.length)];
+            if (lastAnimLocation[name] !== newLoc && cameraOpen) {
+                lastAnimLocation[name] = newLoc;
+                cameraStaticIntensity = 0.75;
+                cameraStaticTimer = Date.now();
+            }
+            const wasAtDoor = anim.atDoor;
+            anim.location = newLoc;
+            anim.atDoor = (anim.location === "Office Left" || anim.location === "Office Right");
+            anim.side = anim.atDoor ? (anim.location === "Office Left" ? "LEFT" : "RIGHT") : null;
+            if (anim.atDoor && !wasAtDoor) {
+                anim.doorArrivalTime = Date.now();
+            }
+            if (!anim.atDoor && wasAtDoor) anim.doorArrivalTime = 0;
+            if (name === "foxy") { if (anim.location !== "Pirates Cove") anim.runCounter = (anim.runCounter || 0) + 1; else anim.runCounter = 0; }
+        }
+    }
+    
+    function updateStaticIntensity() {
+        if (cameraStaticTimer && Date.now() - cameraStaticTimer > 1000) { cameraStaticIntensity = 0.25; cameraStaticTimer = 0; }
+    }
+    
+    function checkDoorAttacks() {
+        if (!gameRunning || powerOut || jumpscareTriggered) return;
+        const now = Date.now();
+        if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && !leftDoorClosed && now - animatronics.bonnie.doorArrivalTime >= 3000) {
+            triggerJumpscare("Bonnie");
+        }
+        if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && !rightDoorClosed && now - animatronics.chica.doorArrivalTime >= 3000) {
+            triggerJumpscare("Chica");
+        }
+        if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && !rightDoorClosed && animatronics.foxy.runCounter > 2 && now - animatronics.foxy.doorArrivalTime >= 3000) {
+            triggerJumpscare("Foxy");
+        }
+        if (animatronics.freddy.atDoor && (!leftDoorClosed || !rightDoorClosed) && now - animatronics.freddy.doorArrivalTime >= 3000) {
+            triggerJumpscare("Freddy");
+        }
+    }
+    
+    function triggerJumpscare(name) {
+        if (jumpscareTriggered) return;
+        jumpscareTriggered = true;
+        gameRunning = false;
+        
+        AudioManager.stop('office_ambience');
+        AudioManager.stop('mid_ambience');
+        AudioManager.stop('powerdown');
+        AudioManager.stop('freddy_is_here');
+        AudioManager.stop('phone_call');
+        AudioManager.stop('menu_music');
+        
+        AudioManager.play('jumpscare');
+        
+        showJumpscare(name.toLowerCase(), () => {
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        });
+        
+        stopPhoneCall();
+    }
+    
+    // ==================== ИГРОВЫЕ ПЕРЕМЕННЫЕ ====================
+    let gameRunning = true, powerOut = false, powerOutTriggered = false;
+    let leftDoor = false, leftLight = false, rightDoor = false, rightLight = false;
+    let cameraOpen = false, cameraAnimFrame = 0, cameraAnimDirection = 0;
+    let currentCam = 0, mouseX = 640, bgOffsetX = 0;
+    let leftDoorAnim = 0, rightDoorAnim = 0, leftDoorAnimDir = 0, rightDoorAnimDir = 0;
+    let nightStart = null, currentHour = 12, hourCount = 0, nightNumber = 1;
+    let power = 100, lastPowerUpdate = Date.now();
+    const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
+    let freddyActive = false, freddyBlink = false, freddyBlinkTimer = 0, roomDark = false;
+    
+    // ЗАГРУЖАЕМ ЗВУКИ
+    AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { volume: 0.5 });
+    AudioManager.load('windowscare', './SFX/windowscare.wav', { volume: 0.6 });
+    AudioManager.load('winning_bells', './SFX/winning_bells.wav', { volume: 0.7 });
+    
+    function startNight(night) {
+        nightNumber = night;
+        nightStart = Date.now();
+        currentHour = 12; hourCount = 0;
+        power = 100;
+        powerOut = false; powerOutTriggered = false;
+        freddyActive = false; roomDark = false;
+        leftDoor = false; rightDoor = false; leftLight = false; rightLight = false;
+        cameraOpen = false; cameraAnimFrame = 0; cameraAnimDirection = 0;
+        leftDoorAnim = 0; rightDoorAnim = 0; leftDoorAnimDir = 0; rightDoorAnimDir = 0;
+        jumpscareTriggered = false; gameRunning = true;
+        cameraStaticIntensity = 0.25;
+        lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
+        leftLightSoundPlayed = false;
+        rightLightSoundPlayed = false;
+        document.getElementById('gameOverScreen').style.display = 'none';
+        
+        animatronics = {
+            bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
+            chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
+            foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
+            freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
+        };
+        
+        const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10, 6: 12 };
+        const lvl = aiMap[night] || 0;
+        animatronics.bonnie.aiLevel = lvl;
+        animatronics.chica.aiLevel = lvl;
+        animatronics.foxy.aiLevel = Math.floor(lvl * 0.8);
+        animatronics.freddy.aiLevel = Math.floor(lvl * 0.6);
+        
+        document.getElementById('nightInfo').innerHTML = `Night ${night} | 12:00 AM`;
+        document.getElementById('gameOverScreen').style.display = 'none';
+        
+        AudioManager.play('office_ambience');
+        setTimeout(() => {
+            AudioManager.stop('office_ambience');
+            AudioManager.load('mid_ambience', './SFX/mid_game_ambience.wav', { loop: true, volume: 0.5 });
+            AudioManager.play('mid_ambience');
+        }, 12000);
+        
+        startPhoneCall(night);
+    }
+    
+    function updateNight() {
+        if (!nightStart || !gameRunning) return;
+        const elapsed = (Date.now() - nightStart) / 1000;
+        const newHour = Math.floor(elapsed / 30);
+        if (newHour !== hourCount && newHour <= 6) {
+            hourCount = newHour;
+            currentHour = hourCount === 0 ? 12 : hourCount;
+            document.getElementById('nightInfo').innerHTML = `Night ${nightNumber} | ${currentHour}:00 AM`;
+        }
+        if (hourCount >= 6 && !jumpscareTriggered) {
+            gameRunning = false;
+            
+            AudioManager.stop('office_ambience');
+            AudioManager.stop('mid_ambience');
+            AudioManager.stop('powerdown');
+            AudioManager.stop('freddy_is_here');
+            AudioManager.stop('phone_call');
+            
+            // Если это 5 ночь и 6 утра — показываем финал
+            if (nightNumber === 5) {
+                showFinal();
+            } else {
+                showSixAmVideo(() => {
+                    if (nightNumber < 6) startNight(nightNumber + 1);
+                    else alert("🏆 You completed all nights! 🏆");
+                });
+            }
+        }
+    }
+    
+    function updatePower() {
+        if (!gameRunning || powerOut) return;
+        const now = Date.now();
+        const dt = (now - lastPowerUpdate) / 1000;
+        lastPowerUpdate = now;
+        let usage = (leftDoor?1:0) + (rightDoor?1:0) + (leftLight?1:0) + (rightLight?1:0) + (cameraOpen?1:0);
+        const usageLevel = Math.min(usage, 4);
+        power = Math.max(0, power - drainRates[usageLevel] * dt);
+        if (power <= 0 && !powerOutTriggered) {
+            powerOutTriggered = true; powerOut = true;
+            AudioManager.stop('office_ambience');
+            AudioManager.stop('mid_ambience');
+            AudioManager.play('powerdown');
+            leftDoor = false; rightDoor = false; leftLight = false; rightLight = false; cameraOpen = false;
+            setTimeout(() => {
+                freddyActive = true; freddyBlinkTimer = Date.now();
+                AudioManager.play('freddy_is_here');
+                setTimeout(() => { roomDark = true; setTimeout(() => { if (gameRunning && powerOut) triggerJumpscare("Freddy"); }, 3000); }, 3000);
+            }, 2000);
+            stopPhoneCall();
+        }
+        if (freddyActive && !roomDark && Date.now() - freddyBlinkTimer > 400) { freddyBlink = !freddyBlink; freddyBlinkTimer = Date.now(); }
+    }
+    
+    function updateCameraAnim() {
+        if (cameraAnimDirection === 1 && cameraAnimFrame < 10) { cameraAnimFrame++; if (cameraAnimFrame === 10) cameraAnimDirection = 0; }
+        else if (cameraAnimDirection === 2 && cameraAnimFrame > 0) { cameraAnimFrame--; if (cameraAnimFrame === 0) cameraAnimDirection = 0; }
+        cameraOpen = (cameraAnimFrame > 0);
+    }
+    
+    function updateDoorAnims() {
+        if (leftDoorAnimDir === 1 && leftDoorAnim < 16) leftDoorAnim++;
+        else if (leftDoorAnimDir === -1 && leftDoorAnim > 0) leftDoorAnim--;
+        if (rightDoorAnimDir === 1 && rightDoorAnim < 16) rightDoorAnim++;
+        else if (rightDoorAnimDir === -1 && rightDoorAnim > 0) rightDoorAnim--;
+    }
+    
+    function updateCameraPan() {
+        const room = cameraRooms[currentCam];
+        room.panX += cameraPanSpeed * room.panDir;
+        if (room.panX >= room.maxPan) { room.panX = room.maxPan; room.panDir = -1; }
+        else if (room.panX <= 0) { room.panX = 0; room.panDir = 1; }
+    }
+    
+    // ==================== МЕНЮ ====================
+    function startMenu() {
+        inMenu = true;
+        if (newspaperOverlay) {
+            newspaperOverlay.remove();
+            newspaperOverlay = null;
+        }
+        updateCallButtonVisibility();
+        gameLoop();
+    }
+    
+    function handleMenuClick(e) {
+        if (!inMenu) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX, clickY = (e.clientY - rect.top) * scaleY;
+        const btnPos = MENU_CONFIG.positions.newgame_btn;
+        if (clickX >= btnPos.x && clickX <= btnPos.x + btnPos.w && clickY >= btnPos.y && clickY <= btnPos.y + btnPos.h) {
+            if (newspaperOverlay) {
+                newspaperOverlay.classList.remove('active');
+                setTimeout(() => {
+                    if (newspaperOverlay) newspaperOverlay.remove();
+                    newspaperOverlay = null;
+                    inMenu = false;
+                    stopMenuMusic();
+                    startNight(1);
+                    updateCallButtonVisibility();
+                }, 500);
+            } else {
+                showNewspaperWithAnimation(() => {
+                    inMenu = false;
+                    stopMenuMusic();
+                    startNight(1);
+                    updateCallButtonVisibility();
+                });
+            }
+        }
+    }
+    
+    function drawMenu() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (images.the_menu) ctx.drawImage(images.the_menu, 0, 0, canvas.width, canvas.height);
+        const titlePos = MENU_CONFIG.positions.game_title;
+        if (images.game_title) ctx.drawImage(images.game_title, titlePos.x, titlePos.y, titlePos.w, titlePos.h);
+        const btnPos = MENU_CONFIG.positions.newgame_btn;
+        if (images.newgame_btn) ctx.drawImage(images.newgame_btn, btnPos.x, btnPos.y, btnPos.w, btnPos.h);
+    }
+    
+    // ==================== ОТРИСОВКА ИГРЫ ====================
+    function drawGame() {
+        if (!images.officeBg) return;
+        let bgImg = images.officeBg;
+        if (powerOut) {
+            if (freddyActive && !roomDark) bgImg = freddyBlink ? images.officeFreddyHere : images.officePowerOut;
+            else bgImg = images.officePowerOut;
+        }
+        const maxOffset = Math.max(0, bgImg.width - canvas.width);
+        bgOffsetX = (mouseX / canvas.width) * maxOffset;
+        ctx.drawImage(bgImg, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+        
+        if (leftLight && images.leftDoorLit) ctx.drawImage(images.leftDoorLit, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+        if (rightLight && images.rightDoorLit) ctx.drawImage(images.rightDoorLit, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+        
+        if (images.officeDoors) {
+            const doorW = 253, doorH = 720;
+            const leftFrameX = leftDoorAnim * doorW, rightFrameX = rightDoorAnim * doorW;
+            ctx.save(); ctx.scale(-1, 1);
+            ctx.drawImage(images.officeDoors, leftFrameX, 0, doorW, doorH, -(0 - bgOffsetX + 280), 0, doorW, doorH);
+            ctx.restore();
+            ctx.drawImage(images.officeDoors, rightFrameX, 0, doorW, doorH, 1300 - bgOffsetX, 0, doorW, doorH);
+        }
+        
+        let leftBtn = images.leftDefault;
+        if (leftDoor && leftLight) leftBtn = images.leftBothOn;
+        else if (leftDoor) leftBtn = images.leftDoorOn;
+        else if (leftLight) leftBtn = images.leftLightOn;
+        let rightBtn = images.rightDefault;
+        if (rightDoor && rightLight) rightBtn = images.rightBothOn;
+        else if (rightDoor) rightBtn = images.rightDoorOn;
+        else if (rightLight) rightBtn = images.rightLightOn;
+        if (leftBtn) ctx.drawImage(leftBtn, 1 - bgOffsetX, 250);
+        if (rightBtn) ctx.drawImage(rightBtn, 1480 - bgOffsetX, 250);
+        
+        if (images.cameraBarOffice && !powerOut) ctx.drawImage(images.cameraBarOffice, 350, 640);
+        
+        if (cameraOpen || cameraAnimFrame > 0) {
+            if (images.cameraLift) {
+                const liftY = cameraAnimFrame * 72;
+                ctx.drawImage(images.cameraLift, 0, liftY, canvas.width, 72, 0, 0, canvas.width, 72);
+            }
+            if (cameraAnimFrame === 10) {
+                const room = cameraRooms[currentCam];
+                updateCameraPan();
+                const roomImg = cameraImages[room.name];
+                if (roomImg && roomImg.complete) ctx.drawImage(roomImg, room.panX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                
+                const camPos = cameraPositions[room.name];
+                if (camPos) {
+                    for (let [name, anim] of Object.entries(animatronics)) {
+                        if (anim.location === room.name && anim.active && images[anim.spriteKey]) {
+                            const pos = camPos[name];
+                            if (pos) {
+                                const size = 400;
+                                const adjustedX = pos.x - room.panX;
+                                ctx.drawImage(images[anim.spriteKey], adjustedX, pos.y, size, size);
+                            }
+                        }
+                    }
+                }
+                
+                updateStaticEffect();
+                drawStaticOverlay(cameraStaticIntensity);
+                
+                if (images.cameraBarMenu) ctx.drawImage(images.cameraBarMenu, 350, 640);
+                if (images.cameraCams) ctx.drawImage(images.cameraCams, 800, 300);
+                if (images.cameraRedDot) ctx.drawImage(images.cameraRedDot, 40, 40);
+                if (images.cameraBorder) ctx.drawImage(images.cameraBorder, 0, 0);
+                ctx.fillStyle = "#fff";
+                ctx.font = "18px monospace";
+                ctx.fillText(room.name, 20, 50);
+            }
+        }
+        
+        if (!powerOut) {
+            ctx.fillStyle = "#0f0"; ctx.font = "20px monospace";
+            ctx.fillText(Math.floor(power) + "%", 190, 638);
+            ctx.fillStyle = "#fff"; ctx.font = "14px monospace";
+            ctx.fillText("POWER", 50, 638); ctx.fillText("USAGE", 50, 673);
+            let usage = (leftDoor?1:0)+(rightDoor?1:0)+(leftLight?1:0)+(rightLight?1:0)+(cameraOpen?1:0);
+            const usageColor = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#0f0";
+            ctx.fillStyle = usageColor; ctx.fillText(usage + "/4", 130, 673);
+        }
+        
+        // ========== АНИМАТРОНИКИ В ДВЕРЯХ ==========
+        const SPRITE_SIZE = 253;
+        const DOOR_Y = 280;
+        const LEFT_DOOR_X = (0 - bgOffsetX + 50);
+        const RIGHT_DOOR_X = 1300 - bgOffsetX;
+        
+        if (!leftDoor && leftLight) {
+            if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && images.bonnie) {
+                ctx.drawImage(images.bonnie, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            }
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT" && images.freddy) {
+                ctx.drawImage(images.freddy, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            }
+        }
+        
+        if (!rightDoor && rightLight) {
+            if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && images.chica) {
+                ctx.drawImage(images.chica, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            }
+            if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && images.foxy) {
+                ctx.drawImage(images.foxy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            }
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT" && images.freddy) {
+                ctx.drawImage(images.freddy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            }
+        }
+        
+        if (roomDark) { ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    }
+    
+    // ==================== КЛИКИ ====================
+    const clickZones = {
+        leftDoorBtn: { x: 1, y: 300, w: 75, h: 50 },
+        leftLightBtn: { x: 1, y: 385, w: 75, h: 50 },
+        rightDoorBtn: { x: 1204, y: 300, w: 75, h: 50 },
+        rightLightBtn: { x: 1204, y: 385, w: 75, h: 50 },
+        cameraBtn: { x: 350, y: 640, w: 600, h: 80 }
+    };
+    
+    function handleGameClick(e) {
+        if (inMenu) return;
+        if (!gameRunning || powerOut) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+        let clickX = (e.clientX - rect.left) * scaleX, clickY = (e.clientY - rect.top) * scaleY;
+        clickX = Math.min(Math.max(clickX, 0), canvas.width); clickY = Math.min(Math.max(clickY, 0), canvas.height);
+        
+        if (clickX >= clickZones.cameraBtn.x && clickX <= clickZones.cameraBtn.x + clickZones.cameraBtn.w && clickY >= clickZones.cameraBtn.y && clickY <= clickZones.cameraBtn.y + clickZones.cameraBtn.h && !powerOut) {
+            if (cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 2; AudioManager.play('camera_close'); }
+            else if (!cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 1; AudioManager.play('camera_open'); }
+            return;
+        }
+        if (cameraOpen && cameraAnimFrame === 10) {
+            for (let zone of minimapZones) {
+                if (clickX >= zone.x && clickX <= zone.x + zone.w && clickY >= zone.y && clickY <= zone.y + zone.h) {
+                    const idx = cameraRooms.findIndex(r => r.name === zone.name);
+                    if (idx !== -1) { currentCam = idx; AudioManager.play('change_camera'); }
+                    return;
+                }
+            }
+            return;
+        }
+        if (!cameraOpen) {
+            // Левая дверь
+            if (clickX >= clickZones.leftDoorBtn.x && clickX <= clickZones.leftDoorBtn.x + clickZones.leftDoorBtn.w && clickY >= clickZones.leftDoorBtn.y && clickY <= clickZones.leftDoorBtn.y + clickZones.leftDoorBtn.h) {
+                leftDoor = !leftDoor; leftDoorAnimDir = leftDoor ? 1 : -1; AudioManager.play('door_open_close');
+                leftDoorClosed = leftDoor;
+                checkDoorAttacks(); return;
+            }
+            // Левый свет
+            if (clickX >= clickZones.leftLightBtn.x && clickX <= clickZones.leftLightBtn.x + clickZones.leftLightBtn.w && clickY >= clickZones.leftLightBtn.y && clickY <= clickZones.leftLightBtn.y + clickZones.leftLightBtn.h) {
+                const wasOff = !leftLight;
+                leftLight = !leftLight;
+                if (leftLight) rightLight = false;
+                
+                if (wasOff && leftLight) {
+                    AudioManager.stop('light_click');
+                    AudioManager.play('light_click');
+                } else if (!wasOff && !leftLight) {
+                    AudioManager.stop('light_click');
+                }
+                
+                if (leftLight && !leftLightSoundPlayed) {
+                    const hasAnimAtLeftDoor = (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") ||
+                                               (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT");
+                    if (hasAnimAtLeftDoor) {
+                        AudioManager.play('windowscare');
+                        leftLightSoundPlayed = true;
+                    }
+                } else if (!leftLight) {
+                    leftLightSoundPlayed = false;
+                }
+                return;
+            }
+            // Правая дверь
+            if (clickX >= clickZones.rightDoorBtn.x && clickX <= clickZones.rightDoorBtn.x + clickZones.rightDoorBtn.w && clickY >= clickZones.rightDoorBtn.y && clickY <= clickZones.rightDoorBtn.y + clickZones.rightDoorBtn.h) {
+                rightDoor = !rightDoor; rightDoorAnimDir = rightDoor ? 1 : -1; AudioManager.play('door_open_close');
+                rightDoorClosed = rightDoor;
+                checkDoorAttacks(); return;
+            }
+            // Правый свет
+            if (clickX >= clickZones.rightLightBtn.x && clickX <= clickZones.rightLightBtn.x + clickZones.rightLightBtn.w && clickY >= clickZones.rightLightBtn.y && clickY <= clickZones.rightLightBtn.y + clickZones.rightLightBtn.h) {
+                const wasOff = !rightLight;
+                rightLight = !rightLight;
+                if (rightLight) leftLight = false;
+                
+                if (wasOff && rightLight) {
+                    AudioManager.stop('light_click');
+                    AudioManager.play('light_click');
+                } else if (!wasOff && !rightLight) {
+                    AudioManager.stop('light_click');
+                }
+                
+                if (rightLight && !rightLightSoundPlayed) {
+                    const hasAnimAtRightDoor = (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") ||
+                                                (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") ||
+                                                (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT");
+                    if (hasAnimAtRightDoor) {
+                        AudioManager.play('windowscare');
+                        rightLightSoundPlayed = true;
+                    }
+                } else if (!rightLight) {
+                    rightLightSoundPlayed = false;
+                }
+                return;
+            }
+        }
+    }
+    
+    function handleCanvasClick(e) {
+        if (inMenu) handleMenuClick(e);
+        else handleGameClick(e);
+    }
+    
+    function startGameLoop() {
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            mouseX = (e.clientX - rect.left) * scaleX;
+            mouseX = Math.min(Math.max(mouseX, 0), canvas.width);
+        });
+        window.addEventListener('keydown', (e) => {
+            if (!inMenu && cameraOpen && cameraAnimFrame === 10) {
+                if (e.key === 'ArrowRight') currentCam = (currentCam + 1) % cameraRooms.length;
+                if (e.key === 'ArrowLeft') currentCam = (currentCam - 1 + cameraRooms.length) % cameraRooms.length;
+            }
+        });
+        document.getElementById('restartBtn').addEventListener('click', () => { if (!inMenu) startNight(nightNumber); });
+        document.getElementById('resetCallBtn').addEventListener('click', () => {
+            if (!inMenu && !newspaperOverlay && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall();
+        });
+        gameLoop();
+    }
+    
+    function gameLoop() {
+        if (!inMenu) {
+            updateStaticIntensity();
+            if (gameRunning && !jumpscareTriggered) {
+                updateNight();
+                updatePower();
+                updateDoorAnims();
+                updateCameraAnim();
+                updateAnimatronics();
+                checkDoorAttacks();
+                leftDoorClosed = leftDoor;
+                rightDoorClosed = rightDoor;
+            }
+            drawGame();
+        } else {
+            drawMenu();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // ==================== ЗАГРУЗКА ====================
+    const soundsList = ['camera_close', 'camera_open', 'change_camera', 'door_open_close', 'powerdown', 'freddy_is_here', 'office_ambience', 'mid_game_ambience'];
+    soundsList.forEach(s => AudioManager.load(s, `./SFX/${s}.wav`));
+    AudioManager.load('jumpscare', './SFX/FNAF1 sound/XSCREAM.wav');
+    for (let i = 1; i <= 5; i++) AudioManager.load(`voiceover${i}`, `./SFX/voiceover${i}.wav`, { volume: 0.7 });
+    loadCameraBackgrounds();
+    startGameLoop();
+</script>
 </body>
 </html>
