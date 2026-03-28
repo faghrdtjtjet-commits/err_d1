@@ -145,7 +145,7 @@
             pointer-events: none;
         }
         .video-overlay.active { opacity: 1; pointer-events: auto; }
-        .video-overlay video { max-width: 100%; max-height: 100%; }
+        .video-overlay video { max-width: 100%; max-height: 100%; pointer-events: none; }
         
         .jumpscare-overlay {
             position: fixed;
@@ -178,6 +178,37 @@
         .final-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
         .canvas-wrapper { position: relative; display: inline-block; transform-origin: top left; }
+        
+        .night-start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2500;
+            flex-direction: column;
+            font-family: 'FNAFPixelOne', monospace;
+            pointer-events: none;
+        }
+        .night-start-screen.hide {
+            display: none;
+        }
+        .night-start-text {
+            color: #fff;
+            font-size: 64px;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+        .night-start-time {
+            color: #fff;
+            font-size: 36px;
+            margin-top: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -331,14 +362,16 @@
         setTimeout(() => { if (document.body.contains(overlay)) { overlay.remove(); if (callback) callback(); } }, 3000);
     }
     
-    // ==================== ВИДЕО 6 AM ====================
+    // ==================== ВИДЕО 6 AM (НЕЛЬЗЯ ПРОПУСТИТЬ) ====================
     function showSixAmVideo(callback) {
         if (videoOverlay) return;
+        
         AudioManager.stop('office_ambience');
         AudioManager.stop('mid_ambience');
         AudioManager.stop('powerdown');
         AudioManager.stop('freddy_is_here');
         AudioManager.stop('phone_call');
+        
         videoOverlay = document.createElement('div');
         videoOverlay.className = 'video-overlay';
         const video = document.createElement('video');
@@ -347,16 +380,27 @@
         video.muted = false;
         video.loop = false;
         video.volume = 0.6;
+        video.style.pointerEvents = 'none';
+        
         videoOverlay.appendChild(video);
         document.getElementById('gameContainer').appendChild(videoOverlay);
         setTimeout(() => videoOverlay.classList.add('active'), 10);
+        
+        // Убираем возможность клика — видео нельзя пропустить
+        videoOverlay.style.pointerEvents = 'none';
+        
         const onEnded = () => {
             video.pause();
             videoOverlay.classList.remove('active');
-            setTimeout(() => { videoOverlay.remove(); videoOverlay = null; if (callback) callback(); }, 300);
+            setTimeout(() => {
+                videoOverlay.remove();
+                videoOverlay = null;
+                if (callback) callback();
+            }, 300);
         };
+        
         video.addEventListener('ended', onEnded);
-        videoOverlay.addEventListener('click', onEnded);
+        // НЕТ videoOverlay.addEventListener('click') — нельзя пропустить!
     }
     
     // ==================== ГАЗЕТА ====================
@@ -376,6 +420,29 @@
             setTimeout(() => { newspaperOverlay.remove(); newspaperOverlay = null; newspaperActive = false; if (callback) callback(); }, 500);
         };
         img.addEventListener('click', closeNewspaper);
+    }
+    
+    // ==================== ЭКРАН НАЧАЛА НОЧИ ====================
+    function showNightStartScreen(nightNumber, callback) {
+        const startScreen = document.createElement('div');
+        startScreen.className = 'night-start-screen';
+        
+        const nightText = document.createElement('div');
+        nightText.className = 'night-start-text';
+        nightText.innerHTML = `NIGHT ${nightNumber}`;
+        
+        const timeText = document.createElement('div');
+        timeText.className = 'night-start-time';
+        timeText.innerHTML = `12:00 AM`;
+        
+        startScreen.appendChild(nightText);
+        startScreen.appendChild(timeText);
+        document.body.appendChild(startScreen);
+        
+        setTimeout(() => {
+            startScreen.remove();
+            if (callback) callback();
+        }, 3000);
     }
     
     // ==================== ЗАГРУЗКА ИЗОБРАЖЕНИЙ ====================
@@ -640,54 +707,56 @@
     }
     
     function startNight(night) {
-        nightNumber = night;
-        nightStart = Date.now();
-        currentHour = 12; hourCount = 0;
-        power = 100;
-        powerOut = false; powerOutTriggered = false;
-        freddyActive = false; roomDark = false;
-        leftDoor = false; rightDoor = false; leftLight = false; rightLight = false;
-        cameraOpen = false; cameraAnimFrame = 0; cameraAnimDirection = 0;
-        leftDoorAnim = 0; rightDoorAnim = 0; leftDoorAnimDir = 0; rightDoorAnimDir = 0;
-        jumpscareTriggered = false; gameRunning = true;
-        cameraStaticIntensity = 0.25;
-        lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
-        leftLightSoundPlayed = false; rightLightSoundPlayed = false;
-        document.getElementById('gameOverScreen').style.display = 'none';
-        
-        if (lightHumPlaying) {
-            AudioManager.stop('light_click');
-            lightHumPlaying = false;
-        }
-        
-        animatronics = {
-            bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
-            chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
-            foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
-            freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
-        };
-        
-        const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10, 6: 12 };
-        const lvl = aiMap[night] || 0;
-        animatronics.bonnie.aiLevel = lvl;
-        animatronics.chica.aiLevel = lvl;
-        animatronics.foxy.aiLevel = Math.floor(lvl * 0.8);
-        animatronics.freddy.aiLevel = Math.floor(lvl * 0.6);
-        
-        document.getElementById('nightInfo').classList.add('visible');
-        const hour12 = currentHour % 12 || 12;
-        const ampm = currentHour >= 12 ? "PM" : "AM";
-        document.getElementById('nightInfo').innerHTML = `NIGHT ${night} | ${hour12}:00 ${ampm}`;
-        document.getElementById('gameOverScreen').style.display = 'none';
-        
-        AudioManager.play('office_ambience');
-        setTimeout(() => {
-            AudioManager.stop('office_ambience');
-            AudioManager.load('mid_ambience', './SFX/mid_game_ambience.wav', { loop: true, volume: 0.5 });
-            AudioManager.play('mid_ambience');
-        }, 12000);
-        
-        startPhoneCall(night);
+        showNightStartScreen(night, () => {
+            nightNumber = night;
+            nightStart = Date.now();
+            currentHour = 12; hourCount = 0;
+            power = 100;
+            powerOut = false; powerOutTriggered = false;
+            freddyActive = false; roomDark = false;
+            leftDoor = false; rightDoor = false; leftLight = false; rightLight = false;
+            cameraOpen = false; cameraAnimFrame = 0; cameraAnimDirection = 0;
+            leftDoorAnim = 0; rightDoorAnim = 0; leftDoorAnimDir = 0; rightDoorAnimDir = 0;
+            jumpscareTriggered = false; gameRunning = true;
+            cameraStaticIntensity = 0.25;
+            lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
+            leftLightSoundPlayed = false; rightLightSoundPlayed = false;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            if (lightHumPlaying) {
+                AudioManager.stop('light_click');
+                lightHumPlaying = false;
+            }
+            
+            animatronics = {
+                bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
+                chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
+                foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
+                freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
+            };
+            
+            const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10, 6: 12 };
+            const lvl = aiMap[night] || 0;
+            animatronics.bonnie.aiLevel = lvl;
+            animatronics.chica.aiLevel = lvl;
+            animatronics.foxy.aiLevel = Math.floor(lvl * 0.8);
+            animatronics.freddy.aiLevel = Math.floor(lvl * 0.6);
+            
+            document.getElementById('nightInfo').classList.add('visible');
+            const hour12 = currentHour % 12 || 12;
+            const ampm = currentHour >= 12 ? "PM" : "AM";
+            document.getElementById('nightInfo').innerHTML = `NIGHT ${night} | ${hour12}:00 ${ampm}`;
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            AudioManager.play('office_ambience');
+            setTimeout(() => {
+                AudioManager.stop('office_ambience');
+                AudioManager.load('mid_ambience', './SFX/mid_game_ambience.wav', { loop: true, volume: 0.5 });
+                AudioManager.play('mid_ambience');
+            }, 12000);
+            
+            startPhoneCall(night);
+        });
     }
     
     function updateNight() {
@@ -708,8 +777,16 @@
             AudioManager.stop('powerdown');
             AudioManager.stop('freddy_is_here');
             AudioManager.stop('phone_call');
-            if (nightNumber === 5) { showFinal(); }
-            else { showSixAmVideo(() => { if (nightNumber < 6) startNight(nightNumber + 1); else alert("🏆 YOU COMPLETED ALL NIGHTS! 🏆"); }); }
+            
+            if (nightNumber === 5) {
+                showFinal();
+            } else {
+                // ВИДЕО 6 AM — НЕЛЬЗЯ ПРОПУСТИТЬ
+                showSixAmVideo(() => {
+                    if (nightNumber < 6) startNight(nightNumber + 1);
+                    else alert("🏆 YOU COMPLETED ALL NIGHTS! 🏆");
+                });
+            }
         }
     }
     
@@ -888,14 +965,11 @@
             }
         }
         
-        // ========== POWER И USAGE В ОДНОЙ СТРОКЕ, ПРИВЯЗАНЫ К ЛЕВОМУ КРАЮ ==========
         if (!powerOut) {
-            // POWER: 100% (одна строка)
             ctx.fillStyle = "#fff";
             ctx.font = "20px 'FNAFPixelOne', monospace";
             ctx.fillText("POWER: " + Math.floor(power) + "%", 50, 638);
             
-            // USAGE: 0/4 (одна строка, чуть ниже)
             let usage = (leftDoor?1:0) + (rightDoor?1:0) + (leftLight?1:0) + (rightLight?1:0) + (cameraOpen?1:0);
             usage = Math.min(usage, 4);
             const usageColor = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#fff";
