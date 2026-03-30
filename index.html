@@ -91,6 +91,65 @@
         .device-btn:active { background: #0f0; color: #000; transform: scale(0.97); }
         .device-selector.hide { display: none; }
         
+        /* ПРЕДУПРЕЖДЕНИЕ - ТЕКСТ РАСТЯНУТ ПО ШИРИНЕ, ШРИФТ МЕНЬШЕ В 1.5 РАЗА */
+        .warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2100;
+            font-family: 'FNAFPixelOne', 'Courier New', monospace;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            cursor: pointer;
+        }
+        .warning-overlay.visible {
+            opacity: 1;
+        }
+        .warning-content {
+            width: 90%;
+            max-width: 1200px;
+            background: transparent;
+            padding: 20px 30px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .warning-title {
+            color: #ff0000;
+            font-size: 48px;  /* уменьшен в 1.5 раза (было 72) */
+            font-weight: normal;
+            letter-spacing: 4px;
+            margin-bottom: 25px;
+        }
+        .warning-text {
+            color: #ffffff;
+            font-size: 12px;  /* уменьшен в 1.5 раза (было 18) */
+            line-height: 1.5;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+        .warning-list {
+            text-align: left;
+            margin: 15px 0 15px 25px;
+            color: #ffffff;
+            font-size: 11px;  /* уменьшен в 1.5 раза (было 17) */
+            line-height: 1.5;
+        }
+        .warning-list li {
+            margin: 6px 0;
+        }
+        .warning-note {
+            margin: 15px 0 0 0;
+            text-align: left;
+            color: #ffffff;
+            font-size: 10px;  /* уменьшен в 1.5 раза (было 16) */
+        }
+        
         .zoom-control {
             position: absolute;
             bottom: 20px;
@@ -194,21 +253,9 @@
             font-family: 'FNAFPixelOne', monospace;
             pointer-events: none;
         }
-        .night-start-screen.hide {
-            display: none;
-        }
-        .night-start-text {
-            color: #fff;
-            font-size: 64px;
-            text-align: center;
-            letter-spacing: 4px;
-        }
-        .night-start-time {
-            color: #fff;
-            font-size: 36px;
-            margin-top: 20px;
-            text-align: center;
-        }
+        .night-start-screen.hide { display: none; }
+        .night-start-text { color: #fff; font-size: 64px; text-align: center; letter-spacing: 4px; }
+        .night-start-time { color: #fff; font-size: 36px; margin-top: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -231,7 +278,7 @@
     <div class="device-btn phone" data-device="phone">📱 ТЕЛЕФОН</div>
 </div>
 
-<div class="zoom-control" id="zoomControl">
+<div class="zoom-control" id="zoomControl" class="hide">
     <label>🔍 МАСШТАБ:</label>
     <input type="range" id="zoomSlider" min="30" max="200" value="100" step="5">
     <span id="zoomValue">100%</span>
@@ -362,16 +409,14 @@
         setTimeout(() => { if (document.body.contains(overlay)) { overlay.remove(); if (callback) callback(); } }, 3000);
     }
     
-    // ==================== ВИДЕО 6 AM (НЕЛЬЗЯ ПРОПУСТИТЬ) ====================
+    // ==================== ВИДЕО 6 AM ====================
     function showSixAmVideo(callback) {
         if (videoOverlay) return;
-        
         AudioManager.stop('office_ambience');
         AudioManager.stop('mid_ambience');
         AudioManager.stop('powerdown');
         AudioManager.stop('freddy_is_here');
         AudioManager.stop('phone_call');
-        
         videoOverlay = document.createElement('div');
         videoOverlay.className = 'video-overlay';
         const video = document.createElement('video');
@@ -381,14 +426,10 @@
         video.loop = false;
         video.volume = 0.6;
         video.style.pointerEvents = 'none';
-        
         videoOverlay.appendChild(video);
         document.getElementById('gameContainer').appendChild(videoOverlay);
         setTimeout(() => videoOverlay.classList.add('active'), 10);
-        
-        // Убираем возможность клика — видео нельзя пропустить
         videoOverlay.style.pointerEvents = 'none';
-        
         const onEnded = () => {
             video.pause();
             videoOverlay.classList.remove('active');
@@ -398,9 +439,7 @@
                 if (callback) callback();
             }, 300);
         };
-        
         video.addEventListener('ended', onEnded);
-        // НЕТ videoOverlay.addEventListener('click') — нельзя пропустить!
     }
     
     // ==================== ГАЗЕТА ====================
@@ -426,19 +465,15 @@
     function showNightStartScreen(nightNumber, callback) {
         const startScreen = document.createElement('div');
         startScreen.className = 'night-start-screen';
-        
         const nightText = document.createElement('div');
         nightText.className = 'night-start-text';
         nightText.innerHTML = `NIGHT ${nightNumber}`;
-        
         const timeText = document.createElement('div');
         timeText.className = 'night-start-time';
         timeText.innerHTML = `12:00 AM`;
-        
         startScreen.appendChild(nightText);
         startScreen.appendChild(timeText);
         document.body.appendChild(startScreen);
-        
         setTimeout(() => {
             startScreen.remove();
             if (callback) callback();
@@ -568,21 +603,115 @@
         else btn.classList.remove('visible');
     }
     
-    // ==================== СТАТИЧЕСКИЙ ЭФФЕКТ ====================
-    let staticFrame = 0, staticTimer = 0;
-    const STATIC_FRAME_COUNT = 8, STATIC_FRAME_WIDTH = 1280, STATIC_FRAME_HEIGHT = 720;
-    let cameraStaticIntensity = 0.25, cameraStaticTimer = 0;
-    function updateStaticEffect() { staticTimer++; if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; } }
-    function drawStaticOverlay(intensity) {
-        if (!images.staticScreen || intensity <= 0) return;
-        ctx.save();
-        ctx.globalAlpha = intensity;
-        const yOffset = staticFrame * STATIC_FRAME_HEIGHT;
-        ctx.drawImage(images.staticScreen, 0, yOffset, STATIC_FRAME_WIDTH, STATIC_FRAME_HEIGHT, 0, 0, canvas.width, canvas.height);
-        ctx.restore();
+    // ==================== ПРЕДУПРЕЖДЕНИЕ (10 СЕКУНД, МОЖНО СКИПНУТЬ КЛИКОМ) ====================
+    let warningSkipped = false;
+    function showWarningAndProceed(callback) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'warning-overlay';
+        warningDiv.innerHTML = `
+            <div class="warning-content">
+                <div class="warning-title">WARNING!</div>
+                <div class="warning-text">
+                    This content is inspired by the Five Nights at Freddy's universe and contains:
+                </div>
+                <ul class="warning-list">
+                    <li>— Sudden loud noises (jump scares);</li>
+                    <li>— Scenes of violence and blood (in pixel/horror style);</li>
+                    <li>— Elements of psychological tension and horror.</li>
+                </ul>
+                <div class="warning-text">
+                    However, this game is created for humorous/parody purposes and does not aim to be a serious horror experience. 
+                    Nevertheless, if you suffer from epilepsy, cardiovascular conditions, or simply don't enjoy being frightened, please proceed with caution.
+                </div>
+                <div class="warning-note">
+                    Watch and play at your own risk!
+                </div>
+            </div>
+        `;
+        document.body.appendChild(warningDiv);
+        
+        setTimeout(() => warningDiv.classList.add('visible'), 10);
+        
+        const closeWarning = () => {
+            if (warningSkipped) return;
+            warningSkipped = true;
+            warningDiv.classList.remove('visible');
+            setTimeout(() => {
+                warningDiv.remove();
+                if (callback) callback();
+            }, 500);
+        };
+        
+        warningDiv.addEventListener('click', closeWarning);
+        
+        setTimeout(() => {
+            if (!warningSkipped) closeWarning();
+        }, 10000);
     }
     
-    // ==================== КОМНАТЫ И АНИМАТРОНИКИ ====================
+    // ==================== ЗАПУСК ИГРЫ ПОСЛЕ ПРЕДУПРЕЖДЕНИЯ ====================
+    function initGameAfterWarning() {
+        document.getElementById('deviceSelector').style.display = 'flex';
+        document.querySelectorAll('.device-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const device = btn.dataset.device;
+                isPhone = (device === 'phone');
+                document.getElementById('deviceSelector').style.display = 'none';
+                const zoomControl = document.getElementById('zoomControl');
+                if (isPhone) { zoomControl.classList.remove('hide'); setZoom(100); }
+                else { zoomControl.classList.add('hide'); setZoom(100); }
+                
+                canvas.removeEventListener('click', handleCanvasClick);
+                canvas.removeEventListener('mousemove', handleMouseMove);
+                canvas.removeEventListener('touchstart', handleTouchStart);
+                canvas.removeEventListener('touchmove', handleTouchMove);
+                canvas.removeEventListener('touchend', handleTouchEnd);
+                if (isPhone) {
+                    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+                    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+                    canvas.addEventListener('touchend', handleTouchEnd);
+                    canvas.addEventListener('touchstart', handleCanvasClick);
+                    document.body.style.touchAction = 'none';
+                } else {
+                    canvas.addEventListener('click', handleCanvasClick);
+                    canvas.addEventListener('mousemove', handleMouseMove);
+                }
+                enterFullscreen();
+                startMenuMusic();
+                startMenu();
+                gameLoop();
+            });
+        });
+        startMenu();
+        gameLoop();
+    }
+    
+    // ==================== ИГРОВАЯ ЛОГИКА ====================
+    let gameRunning = true, powerOut = false, powerOutTriggered = false;
+    let leftDoor = false, leftLight = false, rightDoor = false, rightLight = false;
+    let cameraOpen = false, cameraAnimFrame = 0, cameraAnimDirection = 0;
+    let currentCam = 0, mouseX = 640, bgOffsetX = 0;
+    let leftDoorAnim = 0, rightDoorAnim = 0, leftDoorAnimDir = 0, rightDoorAnimDir = 0;
+    let nightStart = null, currentHour = 12, hourCount = 0, nightNumber = 1;
+    let power = 100, lastPowerUpdate = Date.now();
+    let jumpscareTriggered = false;
+    let freddyActive = false, freddyBlink = false, freddyBlinkTimer = 0, roomDark = false;
+    let leftLightSoundPlayed = false, rightLightSoundPlayed = false;
+    let lightHumPlaying = false;
+    let animatronicsLastUpdate = Date.now();
+    let leftDoorClosed = false, rightDoorClosed = false;
+    let cameraStaticIntensity = 0.25, cameraStaticTimer = 0;
+    let staticFrame = 0, staticTimer = 0;
+    const STATIC_FRAME_COUNT = 8, STATIC_FRAME_HEIGHT = 720;
+    const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
+    
+    let animatronics = {
+        bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
+        chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
+        foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
+        freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
+    };
+    let lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
     let cameraRooms = CAMERA_NAMES.map(name => ({ name: name, panX: 0, panDir: 1, maxPan: 320 }));
     const minimapZones = [
         { name: "Show Stage", x: 920, y: 295, w: 70, h: 40 }, { name: "Dining Area", x: 900, y: 350, w: 70, h: 40 },
@@ -610,18 +739,15 @@
         freddy: { "Show Stage": ["Dining Area"], "Dining Area": ["East Hall", "West Hall", "Restrooms", "Supply Closet"], "East Hall": ["East Hall Corner", "Dining Area"], "East Hall Corner": ["East Hall", "Office Right"], "West Hall": ["West Hall Corner", "Dining Area"], "West Hall Corner": ["West Hall", "Office Left"], "Restrooms": ["Dining Area"], "Supply Closet": ["Dining Area"], "Office Left": ["West Hall Corner"], "Office Right": ["East Hall Corner"] }
     };
     
-    let animatronics = {
-        bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
-        chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
-        foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
-        freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
-    };
+    AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { loop: true, volume: 0.4 });
+    AudioManager.load('windowscare', './SFX/windowscare.wav', { volume: 0.6 });
+    AudioManager.load('winning_bells', './SFX/winning_bells.wav', { volume: 0.7 });
     
-    let animatronicsLastUpdate = Date.now();
-    let leftDoorClosed = false, rightDoorClosed = false, jumpscareTriggered = false;
-    let lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
-    let cameraPanSpeed = 0.4;
-    let leftLightSoundPlayed = false, rightLightSoundPlayed = false;
+    function updateLightHum() {
+        const anyLight = leftLight || rightLight;
+        if (anyLight && !lightHumPlaying) { AudioManager.play('light_click'); lightHumPlaying = true; }
+        else if (!anyLight && lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
+    }
     
     function updateAnimatronics() {
         if (!gameRunning || powerOut || jumpscareTriggered) return;
@@ -635,11 +761,7 @@
             const moves = moveMap[name][anim.location];
             if (!moves || moves.length === 0) continue;
             const newLoc = moves[Math.floor(Math.random() * moves.length)];
-            if (lastAnimLocation[name] !== newLoc && cameraOpen) {
-                lastAnimLocation[name] = newLoc;
-                cameraStaticIntensity = 0.75;
-                cameraStaticTimer = Date.now();
-            }
+            if (lastAnimLocation[name] !== newLoc && cameraOpen) { lastAnimLocation[name] = newLoc; cameraStaticIntensity = 0.75; cameraStaticTimer = Date.now(); }
             const wasAtDoor = anim.atDoor;
             anim.location = newLoc;
             anim.atDoor = (anim.location === "Office Left" || anim.location === "Office Right");
@@ -648,10 +770,6 @@
             if (!anim.atDoor && wasAtDoor) anim.doorArrivalTime = 0;
             if (name === "foxy") { if (anim.location !== "Pirates Cove") anim.runCounter = (anim.runCounter || 0) + 1; else anim.runCounter = 0; }
         }
-    }
-    
-    function updateStaticIntensity() {
-        if (cameraStaticTimer && Date.now() - cameraStaticTimer > 1000) { cameraStaticIntensity = 0.25; cameraStaticTimer = 0; }
     }
     
     function checkDoorAttacks() {
@@ -667,43 +785,10 @@
         if (jumpscareTriggered) return;
         jumpscareTriggered = true;
         gameRunning = false;
-        AudioManager.stop('office_ambience');
-        AudioManager.stop('mid_ambience');
-        AudioManager.stop('powerdown');
-        AudioManager.stop('freddy_is_here');
-        AudioManager.stop('phone_call');
-        AudioManager.stop('menu_music');
+        AudioManager.stopAll();
         AudioManager.play('jumpscare');
         showJumpscare(name.toLowerCase(), () => { document.getElementById('gameOverScreen').style.display = 'flex'; });
         stopPhoneCall();
-    }
-    
-    // ==================== ИГРОВЫЕ ПЕРЕМЕННЫЕ ====================
-    let gameRunning = true, powerOut = false, powerOutTriggered = false;
-    let leftDoor = false, leftLight = false, rightDoor = false, rightLight = false;
-    let cameraOpen = false, cameraAnimFrame = 0, cameraAnimDirection = 0;
-    let currentCam = 0, mouseX = 640, bgOffsetX = 0;
-    let leftDoorAnim = 0, rightDoorAnim = 0, leftDoorAnimDir = 0, rightDoorAnimDir = 0;
-    let nightStart = null, currentHour = 12, hourCount = 0, nightNumber = 1;
-    let power = 100, lastPowerUpdate = Date.now();
-    const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
-    let freddyActive = false, freddyBlink = false, freddyBlinkTimer = 0, roomDark = false;
-    
-    AudioManager.load('light_click', './SFX/FNAF1 sound/BallastHumMedium2.wav', { loop: true, volume: 0.4 });
-    AudioManager.load('windowscare', './SFX/windowscare.wav', { volume: 0.6 });
-    AudioManager.load('winning_bells', './SFX/winning_bells.wav', { volume: 0.7 });
-    
-    let lightHumPlaying = false;
-    
-    function updateLightHum() {
-        const anyLight = leftLight || rightLight;
-        if (anyLight && !lightHumPlaying) {
-            AudioManager.play('light_click');
-            lightHumPlaying = true;
-        } else if (!anyLight && lightHumPlaying) {
-            AudioManager.stop('light_click');
-            lightHumPlaying = false;
-        }
     }
     
     function startNight(night) {
@@ -718,43 +803,26 @@
             cameraOpen = false; cameraAnimFrame = 0; cameraAnimDirection = 0;
             leftDoorAnim = 0; rightDoorAnim = 0; leftDoorAnimDir = 0; rightDoorAnimDir = 0;
             jumpscareTriggered = false; gameRunning = true;
-            cameraStaticIntensity = 0.25;
-            lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
-            leftLightSoundPlayed = false; rightLightSoundPlayed = false;
             document.getElementById('gameOverScreen').style.display = 'none';
-            
-            if (lightHumPlaying) {
-                AudioManager.stop('light_click');
-                lightHumPlaying = false;
-            }
-            
+            if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
             animatronics = {
                 bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
                 chica: { name: "Chica", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "chica", doorArrivalTime: 0 },
                 foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
                 freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
             };
-            
-            const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10, 6: 12 };
+            const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10 };
             const lvl = aiMap[night] || 0;
             animatronics.bonnie.aiLevel = lvl;
             animatronics.chica.aiLevel = lvl;
             animatronics.foxy.aiLevel = Math.floor(lvl * 0.8);
             animatronics.freddy.aiLevel = Math.floor(lvl * 0.6);
-            
             document.getElementById('nightInfo').classList.add('visible');
             const hour12 = currentHour % 12 || 12;
             const ampm = currentHour >= 12 ? "PM" : "AM";
             document.getElementById('nightInfo').innerHTML = `NIGHT ${night} | ${hour12}:00 ${ampm}`;
-            document.getElementById('gameOverScreen').style.display = 'none';
-            
             AudioManager.play('office_ambience');
-            setTimeout(() => {
-                AudioManager.stop('office_ambience');
-                AudioManager.load('mid_ambience', './SFX/mid_game_ambience.wav', { loop: true, volume: 0.5 });
-                AudioManager.play('mid_ambience');
-            }, 12000);
-            
+            setTimeout(() => { AudioManager.stop('office_ambience'); AudioManager.load('mid_ambience', './SFX/mid_game_ambience.wav', { loop: true, volume: 0.5 }); AudioManager.play('mid_ambience'); }, 12000);
             startPhoneCall(night);
         });
     }
@@ -772,21 +840,9 @@
         }
         if (hourCount >= 6 && !jumpscareTriggered) {
             gameRunning = false;
-            AudioManager.stop('office_ambience');
-            AudioManager.stop('mid_ambience');
-            AudioManager.stop('powerdown');
-            AudioManager.stop('freddy_is_here');
-            AudioManager.stop('phone_call');
-            
-            if (nightNumber === 5) {
-                showFinal();
-            } else {
-                // ВИДЕО 6 AM — НЕЛЬЗЯ ПРОПУСТИТЬ
-                showSixAmVideo(() => {
-                    if (nightNumber < 6) startNight(nightNumber + 1);
-                    else alert("🏆 YOU COMPLETED ALL NIGHTS! 🏆");
-                });
-            }
+            AudioManager.stopAll();
+            if (nightNumber === 5) showFinal();
+            else showSixAmVideo(() => { if (nightNumber < 6) startNight(nightNumber + 1); });
         }
     }
     
@@ -801,16 +857,11 @@
         power = Math.max(0, power - drainRates[usageLevel] * dt);
         if (power <= 0 && !powerOutTriggered) {
             powerOutTriggered = true; powerOut = true;
-            AudioManager.stop('office_ambience');
-            AudioManager.stop('mid_ambience');
+            AudioManager.stopAll();
             AudioManager.play('powerdown');
             leftDoor = false; rightDoor = false; leftLight = false; rightLight = false; cameraOpen = false;
             if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
-            setTimeout(() => {
-                freddyActive = true; freddyBlinkTimer = Date.now();
-                AudioManager.play('freddy_is_here');
-                setTimeout(() => { roomDark = true; setTimeout(() => { if (gameRunning && powerOut) triggerJumpscare("Freddy"); }, 3000); }, 3000);
-            }, 2000);
+            setTimeout(() => { freddyActive = true; freddyBlinkTimer = Date.now(); AudioManager.play('freddy_is_here'); setTimeout(() => { roomDark = true; setTimeout(() => { if (gameRunning && powerOut) triggerJumpscare("Freddy"); }, 3000); }, 3000); }, 2000);
             stopPhoneCall();
         }
         if (freddyActive && !roomDark && Date.now() - freddyBlinkTimer > 400) { freddyBlink = !freddyBlink; freddyBlinkTimer = Date.now(); }
@@ -831,91 +882,35 @@
     
     function updateCameraPan() {
         const room = cameraRooms[currentCam];
-        room.panX += cameraPanSpeed * room.panDir;
+        room.panX += 0.4 * room.panDir;
         if (room.panX >= room.maxPan) { room.panX = room.maxPan; room.panDir = -1; }
         else if (room.panX <= 0) { room.panX = 0; room.panDir = 1; }
     }
     
-    // ==================== МЕНЮ ====================
-    function startMenu() {
-        inMenu = true;
-        isGameStarted = false;
-        document.getElementById('nightInfo').classList.remove('visible');
-        if (newspaperOverlay) { newspaperOverlay.remove(); newspaperOverlay = null; }
-        newspaperActive = false;
-        if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
-        updateCallButtonVisibility();
+    function drawStaticOverlay(intensity) {
+        if (!images.staticScreen || intensity <= 0) return;
+        staticTimer++; if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; }
+        ctx.save(); ctx.globalAlpha = intensity;
+        ctx.drawImage(images.staticScreen, 0, staticFrame * STATIC_FRAME_HEIGHT, 1280, 720, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
     }
     
-    function handleMenuClick(e) {
-        if (!inMenu) return;
-        let clientX, clientY;
-        if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
-        else { clientX = e.clientX; clientY = e.clientY; }
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const clickX = (clientX - rect.left) * scaleX;
-        const clickY = (clientY - rect.top) * scaleY;
-        const btnPos = MENU_CONFIG.positions.newgame_btn;
-        if (clickX >= btnPos.x && clickX <= btnPos.x + btnPos.w && clickY >= btnPos.y && clickY <= btnPos.y + btnPos.h) {
-            if (newspaperOverlay) {
-                newspaperOverlay.classList.remove('active');
-                setTimeout(() => {
-                    if (newspaperOverlay) newspaperOverlay.remove();
-                    newspaperOverlay = null;
-                    newspaperActive = false;
-                    inMenu = false;
-                    isGameStarted = true;
-                    stopMenuMusic();
-                    startNight(1);
-                    updateCallButtonVisibility();
-                }, 500);
-            } else {
-                showNewspaperWithAnimation(() => {
-                    inMenu = false;
-                    isGameStarted = true;
-                    stopMenuMusic();
-                    startNight(1);
-                    updateCallButtonVisibility();
-                });
-            }
-        }
-    }
-    
-    function drawMenu() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (images.the_menu) ctx.drawImage(images.the_menu, 0, 0, canvas.width, canvas.height);
-        const titlePos = MENU_CONFIG.positions.game_title;
-        if (images.game_title) ctx.drawImage(images.game_title, titlePos.x, titlePos.y, titlePos.w, titlePos.h);
-        const btnPos = MENU_CONFIG.positions.newgame_btn;
-        if (images.newgame_btn) ctx.drawImage(images.newgame_btn, btnPos.x, btnPos.y, btnPos.w, btnPos.h);
-    }
-    
-    // ==================== ОТРИСОВКА ИГРЫ ====================
     function drawGame() {
         if (!images.officeBg) return;
         let bgImg = images.officeBg;
-        if (powerOut) {
-            if (freddyActive && !roomDark) bgImg = freddyBlink ? images.officeFreddyHere : images.officePowerOut;
-            else bgImg = images.officePowerOut;
-        }
+        if (powerOut) bgImg = (freddyActive && !roomDark) ? (freddyBlink ? images.officeFreddyHere : images.officePowerOut) : images.officePowerOut;
         const maxOffset = Math.max(0, bgImg.width - canvas.width);
         bgOffsetX = (mouseX / canvas.width) * maxOffset;
         ctx.drawImage(bgImg, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-        
         if (leftLight && images.leftDoorLit) ctx.drawImage(images.leftDoorLit, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
         if (rightLight && images.rightDoorLit) ctx.drawImage(images.rightDoorLit, bgOffsetX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-        
         if (images.officeDoors) {
             const doorW = 253, doorH = 720;
-            const leftFrameX = leftDoorAnim * doorW, rightFrameX = rightDoorAnim * doorW;
             ctx.save(); ctx.scale(-1, 1);
-            ctx.drawImage(images.officeDoors, leftFrameX, 0, doorW, doorH, -(0 - bgOffsetX + 280), 0, doorW, doorH);
+            ctx.drawImage(images.officeDoors, leftDoorAnim * doorW, 0, doorW, doorH, -(0 - bgOffsetX + 280), 0, doorW, doorH);
             ctx.restore();
-            ctx.drawImage(images.officeDoors, rightFrameX, 0, doorW, doorH, 1300 - bgOffsetX, 0, doorW, doorH);
+            ctx.drawImage(images.officeDoors, rightDoorAnim * doorW, 0, doorW, doorH, 1300 - bgOffsetX, 0, doorW, doorH);
         }
-        
         let leftBtn = images.leftDefault;
         if (leftDoor && leftLight) leftBtn = images.leftBothOn;
         else if (leftDoor) leftBtn = images.leftDoorOn;
@@ -926,222 +921,135 @@
         else if (rightLight) rightBtn = images.rightLightOn;
         if (leftBtn) ctx.drawImage(leftBtn, 1 - bgOffsetX, 250);
         if (rightBtn) ctx.drawImage(rightBtn, 1480 - bgOffsetX, 250);
-        
         if (images.cameraBarOffice && !powerOut) ctx.drawImage(images.cameraBarOffice, 350, 640);
-        
         if (cameraOpen || cameraAnimFrame > 0) {
-            if (images.cameraLift) {
-                const liftY = cameraAnimFrame * 72;
-                ctx.drawImage(images.cameraLift, 0, liftY, canvas.width, 72, 0, 0, canvas.width, 72);
-            }
+            if (images.cameraLift) ctx.drawImage(images.cameraLift, 0, cameraAnimFrame * 72, canvas.width, 72, 0, 0, canvas.width, 72);
             if (cameraAnimFrame === 10) {
                 const room = cameraRooms[currentCam];
                 updateCameraPan();
                 const roomImg = cameraImages[room.name];
-                if (roomImg && roomImg.complete) ctx.drawImage(roomImg, room.panX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-                
+                if (roomImg) ctx.drawImage(roomImg, room.panX, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
                 const camPos = cameraPositions[room.name];
-                if (camPos) {
-                    for (let [name, anim] of Object.entries(animatronics)) {
-                        if (anim.location === room.name && anim.active && images[anim.spriteKey]) {
-                            const pos = camPos[name];
-                            if (pos) {
-                                const size = 400;
-                                const adjustedX = pos.x - room.panX;
-                                ctx.drawImage(images[anim.spriteKey], adjustedX, pos.y, size, size);
-                            }
-                        }
-                    }
+                if (camPos) for (let [name, anim] of Object.entries(animatronics)) if (anim.location === room.name && anim.active && images[anim.spriteKey]) {
+                    const pos = camPos[name]; if (pos) ctx.drawImage(images[anim.spriteKey], pos.x - room.panX, pos.y, 400, 400);
                 }
-                updateStaticEffect();
                 drawStaticOverlay(cameraStaticIntensity);
                 if (images.cameraBarMenu) ctx.drawImage(images.cameraBarMenu, 350, 640);
                 if (images.cameraCams) ctx.drawImage(images.cameraCams, 800, 300);
                 if (images.cameraRedDot) ctx.drawImage(images.cameraRedDot, 40, 40);
                 if (images.cameraBorder) ctx.drawImage(images.cameraBorder, 0, 0);
-                ctx.fillStyle = "#fff";
-                ctx.font = "18px 'FNAFPixelOne', monospace";
-                ctx.fillText(room.name, 20, 50);
+                ctx.fillStyle = "#fff"; ctx.font = "18px 'FNAFPixelOne', monospace"; ctx.fillText(room.name, 20, 50);
             }
         }
-        
         if (!powerOut) {
-            ctx.fillStyle = "#fff";
-            ctx.font = "20px 'FNAFPixelOne', monospace";
-            ctx.fillText("POWER: " + Math.floor(power) + "%", 50, 638);
-            
-            let usage = (leftDoor?1:0) + (rightDoor?1:0) + (leftLight?1:0) + (rightLight?1:0) + (cameraOpen?1:0);
-            usage = Math.min(usage, 4);
-            const usageColor = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#fff";
-            ctx.fillStyle = usageColor;
-            ctx.font = "14px 'FNAFPixelOne', monospace";
-            ctx.fillText("USAGE: " + usage + "/4", 50, 673);
+            ctx.fillStyle = "#fff"; ctx.font = "20px 'FNAFPixelOne', monospace"; ctx.fillText("POWER: " + Math.floor(power) + "%", 50, 638);
+            let usage = (leftDoor?1:0)+(rightDoor?1:0)+(leftLight?1:0)+(rightLight?1:0)+(cameraOpen?1:0); usage = Math.min(usage,4);
+            ctx.fillStyle = usage > 3 ? "#f00" : usage > 2 ? "#ff0" : "#fff"; ctx.font = "14px 'FNAFPixelOne', monospace"; ctx.fillText("USAGE: " + usage + "/4", 50, 673);
         }
-        
-        const SPRITE_SIZE = 253;
-        const DOOR_Y = 280;
-        const LEFT_DOOR_X = (0 - bgOffsetX + 50);
-        const RIGHT_DOOR_X = 1300 - bgOffsetX;
-        
+        const SPRITE_SIZE = 253, DOOR_Y = 280;
         if (!leftDoor && leftLight) {
-            if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && images.bonnie) ctx.drawImage(images.bonnie, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            if (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT" && images.freddy) ctx.drawImage(images.freddy, LEFT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT" && images.bonnie) ctx.drawImage(images.bonnie, (0 - bgOffsetX + 50), DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT" && images.freddy) ctx.drawImage(images.freddy, (0 - bgOffsetX + 50), DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
         }
         if (!rightDoor && rightLight) {
-            if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && images.chica) ctx.drawImage(images.chica, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && images.foxy) ctx.drawImage(images.foxy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
-            if (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT" && images.freddy) ctx.drawImage(images.freddy, RIGHT_DOOR_X, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT" && images.chica) ctx.drawImage(images.chica, 1300 - bgOffsetX, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT" && images.foxy) ctx.drawImage(images.foxy, 1300 - bgOffsetX, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
+            if (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT" && images.freddy) ctx.drawImage(images.freddy, 1300 - bgOffsetX, DOOR_Y, SPRITE_SIZE, SPRITE_SIZE);
         }
         if (roomDark) { ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
     }
     
-    // ==================== КЛИКИ ====================
-    const clickZones = {
-        leftDoorBtn: { x: 1, y: 300, w: 75, h: 50 },
-        leftLightBtn: { x: 1, y: 385, w: 75, h: 50 },
-        rightDoorBtn: { x: 1204, y: 300, w: 75, h: 50 },
-        rightLightBtn: { x: 1204, y: 385, w: 75, h: 50 },
-        cameraBtn: { x: 350, y: 640, w: 600, h: 80 }
-    };
+    function drawMenu() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (images.the_menu) ctx.drawImage(images.the_menu, 0, 0, canvas.width, canvas.height);
+        if (images.game_title) ctx.drawImage(images.game_title, 58, 63, 200, 200);
+        if (images.newgame_btn) ctx.drawImage(images.newgame_btn, 55, 506, 300, 45);
+    }
     
-    function handleGameClick(e) {
-        if (inMenu) return;
-        if (!gameRunning || powerOut) return;
+    function handleMenuClick(e) {
+        if (!inMenu) return;
         let clientX, clientY;
         if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
         else { clientX = e.clientX; clientY = e.clientY; }
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        let clickX = (clientX - rect.left) * scaleX;
-        let clickY = (clientY - rect.top) * scaleY;
+        const clickX = (clientX - rect.left) * (canvas.width / rect.width);
+        const clickY = (clientY - rect.top) * (canvas.height / rect.height);
+        if (clickX >= 55 && clickX <= 355 && clickY >= 506 && clickY <= 551) {
+            if (newspaperOverlay) {
+                newspaperOverlay.classList.remove('active');
+                setTimeout(() => { newspaperOverlay.remove(); newspaperOverlay = null; newspaperActive = false; inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); }, 500);
+            } else showNewspaperWithAnimation(() => { inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); });
+        }
+    }
+    
+    const clickZones = { leftDoorBtn: { x: 1, y: 300, w: 75, h: 50 }, leftLightBtn: { x: 1, y: 385, w: 75, h: 50 }, rightDoorBtn: { x: 1204, y: 300, w: 75, h: 50 }, rightLightBtn: { x: 1204, y: 385, w: 75, h: 50 }, cameraBtn: { x: 350, y: 640, w: 600, h: 80 } };
+    
+    function handleGameClick(e) {
+        if (inMenu || !gameRunning || powerOut) return;
+        let clientX, clientY;
+        if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
+        else { clientX = e.clientX; clientY = e.clientY; }
+        const rect = canvas.getBoundingClientRect();
+        let clickX = (clientX - rect.left) * (canvas.width / rect.width);
+        let clickY = (clientY - rect.top) * (canvas.height / rect.height);
         clickX = Math.min(Math.max(clickX, 0), canvas.width);
         clickY = Math.min(Math.max(clickY, 0), canvas.height);
-        
         if (clickX >= clickZones.cameraBtn.x && clickX <= clickZones.cameraBtn.x + clickZones.cameraBtn.w && clickY >= clickZones.cameraBtn.y && clickY <= clickZones.cameraBtn.y + clickZones.cameraBtn.h && !powerOut) {
             if (cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 2; AudioManager.play('camera_close'); }
             else if (!cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 1; AudioManager.play('camera_open'); }
             return;
         }
         if (cameraOpen && cameraAnimFrame === 10) {
-            for (let zone of minimapZones) {
-                if (clickX >= zone.x && clickX <= zone.x + zone.w && clickY >= zone.y && clickY <= zone.y + zone.h) {
-                    const idx = cameraRooms.findIndex(r => r.name === zone.name);
-                    if (idx !== -1) { currentCam = idx; AudioManager.play('change_camera'); }
-                    return;
-                }
-            }
-            return;
+            for (let zone of minimapZones) if (clickX >= zone.x && clickX <= zone.x + zone.w && clickY >= zone.y && clickY <= zone.y + zone.h) {
+                const idx = cameraRooms.findIndex(r => r.name === zone.name);
+                if (idx !== -1) { currentCam = idx; AudioManager.play('change_camera'); } return;
+            } return;
         }
         if (!cameraOpen) {
             if (clickX >= clickZones.leftDoorBtn.x && clickX <= clickZones.leftDoorBtn.x + clickZones.leftDoorBtn.w && clickY >= clickZones.leftDoorBtn.y && clickY <= clickZones.leftDoorBtn.y + clickZones.leftDoorBtn.h) {
-                leftDoor = !leftDoor; leftDoorAnimDir = leftDoor ? 1 : -1; AudioManager.play('door_open_close');
-                leftDoorClosed = leftDoor;
-                checkDoorAttacks(); return;
+                leftDoor = !leftDoor; leftDoorAnimDir = leftDoor ? 1 : -1; AudioManager.play('door_open_close'); leftDoorClosed = leftDoor; checkDoorAttacks(); return;
             }
             if (clickX >= clickZones.leftLightBtn.x && clickX <= clickZones.leftLightBtn.x + clickZones.leftLightBtn.w && clickY >= clickZones.leftLightBtn.y && clickY <= clickZones.leftLightBtn.y + clickZones.leftLightBtn.h) {
-                const wasOff = !leftLight;
-                leftLight = !leftLight;
-                if (leftLight) rightLight = false;
-                updateLightHum();
-                if (leftLight && !leftLightSoundPlayed) {
-                    const hasAnimAtLeftDoor = (animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT");
-                    if (hasAnimAtLeftDoor) { AudioManager.play('windowscare'); leftLightSoundPlayed = true; }
-                } else if (!leftLight) { leftLightSoundPlayed = false; }
-                return;
+                leftLight = !leftLight; if (leftLight) rightLight = false; updateLightHum();
+                if (leftLight && !leftLightSoundPlayed && ((animatronics.bonnie.atDoor && animatronics.bonnie.side === "LEFT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "LEFT"))) { AudioManager.play('windowscare'); leftLightSoundPlayed = true; }
+                else if (!leftLight) leftLightSoundPlayed = false; return;
             }
             if (clickX >= clickZones.rightDoorBtn.x && clickX <= clickZones.rightDoorBtn.x + clickZones.rightDoorBtn.w && clickY >= clickZones.rightDoorBtn.y && clickY <= clickZones.rightDoorBtn.y + clickZones.rightDoorBtn.h) {
-                rightDoor = !rightDoor; rightDoorAnimDir = rightDoor ? 1 : -1; AudioManager.play('door_open_close');
-                rightDoorClosed = rightDoor;
-                checkDoorAttacks(); return;
+                rightDoor = !rightDoor; rightDoorAnimDir = rightDoor ? 1 : -1; AudioManager.play('door_open_close'); rightDoorClosed = rightDoor; checkDoorAttacks(); return;
             }
             if (clickX >= clickZones.rightLightBtn.x && clickX <= clickZones.rightLightBtn.x + clickZones.rightLightBtn.w && clickY >= clickZones.rightLightBtn.y && clickY <= clickZones.rightLightBtn.y + clickZones.rightLightBtn.h) {
-                const wasOff = !rightLight;
-                rightLight = !rightLight;
-                if (rightLight) leftLight = false;
-                updateLightHum();
-                if (rightLight && !rightLightSoundPlayed) {
-                    const hasAnimAtRightDoor = (animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") || (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT");
-                    if (hasAnimAtRightDoor) { AudioManager.play('windowscare'); rightLightSoundPlayed = true; }
-                } else if (!rightLight) { rightLightSoundPlayed = false; }
-                return;
+                rightLight = !rightLight; if (rightLight) leftLight = false; updateLightHum();
+                if (rightLight && !rightLightSoundPlayed && ((animatronics.chica.atDoor && animatronics.chica.side === "RIGHT") || (animatronics.foxy.atDoor && animatronics.foxy.side === "RIGHT") || (animatronics.freddy.atDoor && animatronics.freddy.side === "RIGHT"))) { AudioManager.play('windowscare'); rightLightSoundPlayed = true; }
+                else if (!rightLight) rightLightSoundPlayed = false; return;
             }
         }
     }
-    
-    // ==================== ТЕЛЕФОН: ПАНОРАМИРОВАНИЕ ====================
-    let touchStartMouseX = 640, touchStartX = 0;
-    function handleTouchStart(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; touchStartX = touchX; touchStartMouseX = mouseX; e.preventDefault(); } }
-    function handleTouchMove(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; const deltaX = touchX - touchStartX; let newMouseX = touchStartMouseX + deltaX; newMouseX = Math.min(Math.max(newMouseX, 0), canvas.width); mouseX = newMouseX; e.preventDefault(); } }
-    function handleTouchEnd(e) { if (inMenu) return; if (isPhone) e.preventDefault(); }
     
     function handleCanvasClick(e) { if (inMenu) handleMenuClick(e); else handleGameClick(e); }
+    function handleMouseMove(e) { if (!isPhone && !inMenu) { const rect = canvas.getBoundingClientRect(); mouseX = (e.clientX - rect.left) * (canvas.width / rect.width); mouseX = Math.min(Math.max(mouseX, 0), canvas.width); } }
+    let touchStartMouseX = 640, touchStartX = 0;
+    function handleTouchStart(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const touchX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width); touchStartX = touchX; touchStartMouseX = mouseX; e.preventDefault(); } }
+    function handleTouchMove(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const touchX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width); mouseX = Math.min(Math.max(touchStartMouseX + (touchX - touchStartX), 0), canvas.width); e.preventDefault(); } }
+    function handleTouchEnd(e) { if (inMenu) return; if (isPhone) e.preventDefault(); }
     
-    // ==================== ВЫБОР УСТРОЙСТВА ====================
-    function selectDevice(device) {
-        isPhone = (device === 'phone');
-        document.getElementById('deviceSelector').classList.add('hide');
-        const zoomControl = document.getElementById('zoomControl');
-        if (isPhone) { zoomControl.classList.remove('hide'); setZoom(100); }
-        else { zoomControl.classList.add('hide'); setZoom(100); }
-        canvas.removeEventListener('click', handleCanvasClick);
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('touchstart', handleTouchStart);
-        canvas.removeEventListener('touchmove', handleTouchMove);
-        canvas.removeEventListener('touchend', handleTouchEnd);
-        if (isPhone) {
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-            canvas.addEventListener('touchend', handleTouchEnd);
-            canvas.addEventListener('touchstart', handleCanvasClick);
-            document.body.style.touchAction = 'none';
-        } else {
-            canvas.addEventListener('click', handleCanvasClick);
-            canvas.addEventListener('mousemove', handleMouseMove);
-        }
-        enterFullscreen();
-        startMenuMusic();
-        startMenu();
-        gameLoop();
-    }
-    
-    function handleMouseMove(e) { if (!isPhone && !inMenu) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; mouseX = (e.clientX - rect.left) * scaleX; mouseX = Math.min(Math.max(mouseX, 0), canvas.width); } }
-    
-    const zoomSlider = document.getElementById('zoomSlider');
-    zoomSlider.addEventListener('input', (e) => { setZoom(parseInt(e.target.value)); });
-    document.querySelectorAll('.device-btn').forEach(btn => { btn.addEventListener('click', () => { selectDevice(btn.dataset.device); }); });
-    
-    function startGameLoop() {
-        window.addEventListener('keydown', (e) => { if (!inMenu && cameraOpen && cameraAnimFrame === 10) { if (e.key === 'ArrowRight') currentCam = (currentCam + 1) % cameraRooms.length; if (e.key === 'ArrowLeft') currentCam = (currentCam - 1 + cameraRooms.length) % cameraRooms.length; } });
-        document.getElementById('restartBtn').addEventListener('click', () => { if (!inMenu) startNight(nightNumber); });
-        document.getElementById('resetCallBtn').addEventListener('click', () => { if (!inMenu && !newspaperActive && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall(); });
-    }
+    function startMenu() { inMenu = true; isGameStarted = false; document.getElementById('nightInfo').classList.remove('visible'); updateCallButtonVisibility(); }
     
     function gameLoop() {
-        if (!inMenu) {
-            updateStaticIntensity();
-            if (gameRunning && !jumpscareTriggered) {
-                updateNight();
-                updatePower();
-                updateDoorAnims();
-                updateCameraAnim();
-                updateAnimatronics();
-                checkDoorAttacks();
-                leftDoorClosed = leftDoor;
-                rightDoorClosed = rightDoor;
-            }
+        if (!inMenu && isGameStarted) {
+            updateNight(); updatePower(); updateDoorAnims(); updateCameraAnim(); updateAnimatronics(); checkDoorAttacks();
+            leftDoorClosed = leftDoor; rightDoorClosed = rightDoor;
             drawGame();
-        } else { drawMenu(); }
+        } else if (inMenu) drawMenu();
         requestAnimationFrame(gameLoop);
     }
     
-    // ==================== ЗАГРУЗКА ====================
-    const soundsList = ['camera_close', 'camera_open', 'change_camera', 'door_open_close', 'powerdown', 'freddy_is_here', 'office_ambience', 'mid_game_ambience'];
+    const soundsList = ['camera_close', 'camera_open', 'change_camera', 'door_open_close', 'powerdown', 'freddy_is_here', 'office_ambience'];
     soundsList.forEach(s => AudioManager.load(s, `./SFX/${s}.wav`));
     AudioManager.load('jumpscare', './SFX/FNAF1 sound/XSCREAM.wav');
     for (let i = 1; i <= 5; i++) AudioManager.load(`voiceover${i}`, `./SFX/voiceover${i}.wav`, { volume: 0.7 });
     loadCameraBackgrounds();
-    startGameLoop();
+    
+    showWarningAndProceed(() => { initGameAfterWarning(); });
 </script>
 </body>
 </html>
