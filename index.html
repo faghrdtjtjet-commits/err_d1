@@ -13,18 +13,90 @@
             font-display: swap;
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'FNAFPixelOne', 'Courier New', monospace; }
-        .game-container { position: relative; display: inline-block; }
-        canvas { display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; touch-action: none; transform-origin: top left; }
-        .game-over { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 300; display: none; }
-        .game-over h1 { color: #ff0000; font-size: 48px; margin-bottom: 20px; font-family: 'FNAFPixelOne', monospace; }
-        .game-over p { color: #fff; font-size: 24px; margin-bottom: 30px; font-family: 'FNAFPixelOne', monospace; }
-        .game-over button { padding: 10px 30px; font-size: 18px; background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; font-family: 'FNAFPixelOne', monospace; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        
+        html, body { 
+            width: 100%;
+            height: 100%;
+            background: #000; 
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-family: 'FNAFPixelOne', 'Courier New', monospace;
+        }
+        
+        .game-container { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        .canvas-wrapper { 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        canvas { 
+            display: block;
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: crosshair; 
+            touch-action: none; 
+            border: none;
+            outline: none;
+            background: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .game-over { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.95); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 300; 
+            display: none; 
+        }
+        .game-over h1 { color: #ff0000; font-size: clamp(24px, 8vw, 48px); margin-bottom: 20px; font-family: 'FNAFPixelOne', monospace; text-align: center; }
+        .game-over p { color: #fff; font-size: clamp(16px, 5vw, 24px); margin-bottom: 30px; font-family: 'FNAFPixelOne', monospace; text-align: center; }
+        .game-over button { padding: 10px 30px; font-size: clamp(14px, 4vw, 18px); background: #333; color: #fff; border: 2px solid #ff0000; cursor: pointer; font-family: 'FNAFPixelOne', monospace; }
         .game-over button:hover { background: #ff0000; }
         
         .night-info {
-            position: absolute;
+            position: fixed;
             top: 10px;
             right: 10px;
             color: #fff;
@@ -39,11 +111,24 @@
         }
         .night-info.visible { display: block; }
         
-        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #0f0; background: #000; padding: 20px; border-radius: 10px; z-index: 1000; border: 2px solid #0f0; text-align: center; font-family: 'FNAFPixelOne', monospace; }
+        .loading { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            color: #0f0; 
+            background: #000; 
+            padding: 20px; 
+            border-radius: 10px; 
+            z-index: 1000; 
+            border: 2px solid #0f0; 
+            text-align: center; 
+            font-family: 'FNAFPixelOne', monospace; 
+        }
         .loading.hide { display: none; }
         
         .reset-call-btn {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             right: 20px;
             background: #444;
@@ -91,7 +176,6 @@
         .device-btn:active { background: #0f0; color: #000; transform: scale(0.97); }
         .device-selector.hide { display: none; }
         
-        /* ПРЕДУПРЕЖДЕНИЕ - ТЕКСТ РАСТЯНУТ ПО ШИРИНЕ, ШРИФТ МЕНЬШЕ В 1.5 РАЗА */
         .warning-overlay {
             position: fixed;
             top: 0;
@@ -108,9 +192,7 @@
             transition: opacity 0.5s ease;
             cursor: pointer;
         }
-        .warning-overlay.visible {
-            opacity: 1;
-        }
+        .warning-overlay.visible { opacity: 1; }
         .warning-content {
             width: 90%;
             max-width: 1200px;
@@ -119,39 +201,14 @@
             text-align: center;
             pointer-events: none;
         }
-        .warning-title {
-            color: #ff0000;
-            font-size: 48px;  /* уменьшен в 1.5 раза (было 72) */
-            font-weight: normal;
-            letter-spacing: 4px;
-            margin-bottom: 25px;
-        }
-        .warning-text {
-            color: #ffffff;
-            font-size: 12px;  /* уменьшен в 1.5 раза (было 18) */
-            line-height: 1.5;
-            text-align: left;
-            margin-bottom: 15px;
-        }
-        .warning-list {
-            text-align: left;
-            margin: 15px 0 15px 25px;
-            color: #ffffff;
-            font-size: 11px;  /* уменьшен в 1.5 раза (было 17) */
-            line-height: 1.5;
-        }
-        .warning-list li {
-            margin: 6px 0;
-        }
-        .warning-note {
-            margin: 15px 0 0 0;
-            text-align: left;
-            color: #ffffff;
-            font-size: 10px;  /* уменьшен в 1.5 раза (было 16) */
-        }
+        .warning-title { color: #ff0000; font-size: clamp(24px, 8vw, 48px); font-weight: normal; letter-spacing: 4px; margin-bottom: 25px; }
+        .warning-text { color: #ffffff; font-size: clamp(10px, 3vw, 12px); line-height: 1.5; text-align: left; margin-bottom: 15px; }
+        .warning-list { text-align: left; margin: 15px 0 15px 25px; color: #ffffff; font-size: clamp(9px, 2.8vw, 11px); line-height: 1.5; }
+        .warning-list li { margin: 6px 0; }
+        .warning-note { margin: 15px 0 0 0; text-align: left; color: #ffffff; font-size: clamp(8px, 2.5vw, 10px); }
         
         .zoom-control {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 20px;
             background: rgba(0,0,0,0.7);
@@ -171,12 +228,12 @@
         .zoom-control span { color: #fff; font-size: 10px; min-width: 40px; }
         
         .newspaper-overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.85);
+            background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -186,10 +243,10 @@
             pointer-events: none;
         }
         .newspaper-overlay.active { opacity: 1; pointer-events: auto; }
-        .newspaper-image { max-width: 90%; max-height: 90%; object-fit: contain; cursor: pointer; }
+        .newspaper-image { width: 100%; height: 100%; object-fit: contain; cursor: pointer; background: #000; }
         
         .video-overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -204,7 +261,7 @@
             pointer-events: none;
         }
         .video-overlay.active { opacity: 1; pointer-events: auto; }
-        .video-overlay video { max-width: 100%; max-height: 100%; pointer-events: none; }
+        .video-overlay video { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
         
         .jumpscare-overlay {
             position: fixed;
@@ -219,7 +276,7 @@
             z-index: 1000;
             cursor: pointer;
         }
-        .jumpscare-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .jumpscare-overlay img { width: 100%; height: 100%; object-fit: contain; }
         
         .final-overlay {
             position: fixed;
@@ -234,9 +291,7 @@
             z-index: 2000;
             flex-direction: column;
         }
-        .final-overlay img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        
-        .canvas-wrapper { position: relative; display: inline-block; transform-origin: top left; }
+        .final-overlay img { width: 100%; height: 100%; object-fit: contain; }
         
         .night-start-screen {
             position: fixed;
@@ -254,8 +309,8 @@
             pointer-events: none;
         }
         .night-start-screen.hide { display: none; }
-        .night-start-text { color: #fff; font-size: 64px; text-align: center; letter-spacing: 4px; }
-        .night-start-time { color: #fff; font-size: 36px; margin-top: 20px; text-align: center; }
+        .night-start-text { color: #fff; font-size: clamp(32px, 12vw, 64px); text-align: center; letter-spacing: 4px; }
+        .night-start-time { color: #fff; font-size: clamp(20px, 8vw, 36px); margin-top: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -300,10 +355,6 @@
             the_menu: { x: 0, y: 0, w: 1280, h: 720 },
             intro: { x: 0, y: 0, w: 1280, h: 720 },
             main_menu: { x: 0, y: 0, w: 1280, h: 720 }
-        },
-        settings: {
-            newspaper_duration: 5,
-            auto_close: true
         }
     };
     
@@ -314,25 +365,33 @@
     canvas.width = 1280;
     canvas.height = 720;
     
-    // ==================== УСТРОЙСТВО ====================
+    function resizeCanvas() {
+        const scale = Math.min(window.innerWidth / canvas.width, window.innerHeight / canvas.height);
+        const scaledWidth = canvas.width * scale;
+        const scaledHeight = canvas.height * scale;
+        canvas.style.width = scaledWidth + 'px';
+        canvas.style.height = scaledHeight + 'px';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '50%';
+        canvas.style.left = '50%';
+        canvas.style.transform = 'translate(-50%, -50%)';
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
     let isPhone = false;
     let currentZoom = 100;
     let newspaperActive = false;
     let isGameStarted = false;
     
-    // ==================== МАСШТАБ ====================
     function updateZoom() {
         const scale = currentZoom / 100;
-        canvasWrapper.style.transform = `scale(${scale})`;
-        canvasWrapper.style.transformOrigin = 'top left';
         const container = document.querySelector('.game-container');
-        container.style.width = `${1280 * scale}px`;
-        container.style.height = `${720 * scale}px`;
+        container.style.transform = `scale(${scale})`;
+        container.style.transformOrigin = 'center center';
         document.getElementById('zoomValue').innerText = currentZoom + '%';
     }
     function setZoom(value) { currentZoom = Math.min(200, Math.max(30, value)); updateZoom(); }
     
-    // ==================== ПОЛНОЭКРАННЫЙ РЕЖИМ ====================
     function enterFullscreen() {
         const elem = document.documentElement;
         if (elem.requestFullscreen) elem.requestFullscreen();
@@ -340,7 +399,6 @@
         else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
     
-    // ==================== МЕНЮ ====================
     let inMenu = true;
     let newspaperOverlay = null;
     let videoOverlay = null;
@@ -348,7 +406,6 @@
     let finalMusicPlaying = false;
     let finalTimer = null;
     
-    // ==================== АУДИО ====================
     const AudioManager = {
         sounds: {},
         load(name, src, options = {}) {
@@ -374,7 +431,6 @@
         }
     };
     
-    // ==================== ФИНАЛ ====================
     function showFinal() {
         if (finalOverlay) return;
         AudioManager.stopAll();
@@ -395,28 +451,21 @@
         finalTimer = setTimeout(() => { if (finalMusicPlaying) location.reload(); }, 12000);
     }
     
-    // ==================== СКРИМЕР ====================
     function showJumpscare(animatronic, callback) {
         const overlay = document.createElement('div');
         overlay.className = 'jumpscare-overlay';
         const img = document.createElement('img');
         const jumpscarePaths = { bonnie: './Sprites/bon.png', chica: './Sprites/chik.png', foxy: './Sprites/fox.png', freddy: './Sprites/fred.png' };
         img.src = jumpscarePaths[animatronic];
-        img.style.transform = 'scale(1.5)';
         overlay.appendChild(img);
         document.body.appendChild(overlay);
         overlay.addEventListener('click', () => { overlay.remove(); if (callback) callback(); });
         setTimeout(() => { if (document.body.contains(overlay)) { overlay.remove(); if (callback) callback(); } }, 3000);
     }
     
-    // ==================== ВИДЕО 6 AM ====================
     function showSixAmVideo(callback) {
         if (videoOverlay) return;
-        AudioManager.stop('office_ambience');
-        AudioManager.stop('mid_ambience');
-        AudioManager.stop('powerdown');
-        AudioManager.stop('freddy_is_here');
-        AudioManager.stop('phone_call');
+        AudioManager.stopAll();
         videoOverlay = document.createElement('div');
         videoOverlay.className = 'video-overlay';
         const video = document.createElement('video');
@@ -425,24 +474,17 @@
         video.muted = false;
         video.loop = false;
         video.volume = 0.6;
-        video.style.pointerEvents = 'none';
         videoOverlay.appendChild(video);
         document.getElementById('gameContainer').appendChild(videoOverlay);
         setTimeout(() => videoOverlay.classList.add('active'), 10);
-        videoOverlay.style.pointerEvents = 'none';
         const onEnded = () => {
             video.pause();
             videoOverlay.classList.remove('active');
-            setTimeout(() => {
-                videoOverlay.remove();
-                videoOverlay = null;
-                if (callback) callback();
-            }, 300);
+            setTimeout(() => { videoOverlay.remove(); videoOverlay = null; if (callback) callback(); }, 300);
         };
         video.addEventListener('ended', onEnded);
     }
     
-    // ==================== ГАЗЕТА ====================
     function showNewspaperWithAnimation(callback) {
         if (newspaperOverlay) return;
         newspaperActive = true;
@@ -452,7 +494,7 @@
         img.className = 'newspaper-image';
         img.src = MENU_CONFIG.textures.intro;
         newspaperOverlay.appendChild(img);
-        document.getElementById('gameContainer').appendChild(newspaperOverlay);
+        document.body.appendChild(newspaperOverlay);
         setTimeout(() => newspaperOverlay.classList.add('active'), 10);
         const closeNewspaper = () => {
             newspaperOverlay.classList.remove('active');
@@ -461,7 +503,6 @@
         img.addEventListener('click', closeNewspaper);
     }
     
-    // ==================== ЭКРАН НАЧАЛА НОЧИ ====================
     function showNightStartScreen(nightNumber, callback) {
         const startScreen = document.createElement('div');
         startScreen.className = 'night-start-screen';
@@ -474,13 +515,9 @@
         startScreen.appendChild(nightText);
         startScreen.appendChild(timeText);
         document.body.appendChild(startScreen);
-        setTimeout(() => {
-            startScreen.remove();
-            if (callback) callback();
-        }, 3000);
+        setTimeout(() => { startScreen.remove(); if (callback) callback(); }, 3000);
     }
     
-    // ==================== ЗАГРУЗКА ИЗОБРАЖЕНИЙ ====================
     const images = {};
     let imagesLoaded = 0;
     let totalImages = 0;
@@ -562,11 +599,11 @@
     function checkAllLoaded() {
         if (imagesLoaded === totalImages && cameraImagesLoaded === totalCameraImages) {
             document.getElementById('loading').classList.add('hide');
-            document.getElementById('gameContainer').style.display = 'block';
+            document.getElementById('gameContainer').style.display = 'flex';
+            resizeCanvas();
         }
     }
     
-    // ==================== МУЗЫКА В МЕНЮ ====================
     let menuMusicStarted = false;
     function startMenuMusic() {
         if (menuMusicStarted) return;
@@ -579,7 +616,6 @@
         menuMusicStarted = false;
     }
     
-    // ==================== ЗВОНОК ====================
     let callTimeout = null;
     let callActive = false;
     function startPhoneCall(nightNumber) {
@@ -595,15 +631,14 @@
         callActive = false;
         updateCallButtonVisibility();
     }
-    function resetPhoneCall() { if (callActive || callTimeout) stopPhoneCall(); }
+    function resetPhoneCall() { if (callActive || callTimeout !== null) stopPhoneCall(); }
     function updateCallButtonVisibility() {
         const btn = document.getElementById('resetCallBtn');
-        const isVisible = !inMenu && !newspaperActive && (callActive || callTimeout !== null);
+        const isVisible = !inMenu && !newspaperActive && !powerOut && gameRunning && (callActive || callTimeout !== null);
         if (isVisible) btn.classList.add('visible');
         else btn.classList.remove('visible');
     }
     
-    // ==================== ПРЕДУПРЕЖДЕНИЕ (10 СЕКУНД, МОЖНО СКИПНУТЬ КЛИКОМ) ====================
     let warningSkipped = false;
     function showWarningAndProceed(callback) {
         const warningDiv = document.createElement('div');
@@ -611,45 +646,24 @@
         warningDiv.innerHTML = `
             <div class="warning-content">
                 <div class="warning-title">WARNING!</div>
-                <div class="warning-text">
-                    This content is inspired by the Five Nights at Freddy's universe and contains:
-                </div>
-                <ul class="warning-list">
-                    <li>— Sudden loud noises (jump scares);</li>
-                    <li>— Scenes of violence and blood (in pixel/horror style);</li>
-                    <li>— Elements of psychological tension and horror.</li>
-                </ul>
-                <div class="warning-text">
-                    However, this game is created for humorous/parody purposes and does not aim to be a serious horror experience. 
-                    Nevertheless, if you suffer from epilepsy, cardiovascular conditions, or simply don't enjoy being frightened, please proceed with caution.
-                </div>
-                <div class="warning-note">
-                    Watch and play at your own risk!
-                </div>
+                <div class="warning-text">This content is inspired by the Five Nights at Freddy's universe and contains:</div>
+                <ul class="warning-list"><li>— Sudden loud noises (jump scares);</li><li>— Scenes of violence and blood (in pixel/horror style);</li><li>— Elements of psychological tension and horror.</li></ul>
+                <div class="warning-text">However, this game is created for humorous/parody purposes and does not aim to be a serious horror experience. Nevertheless, if you suffer from epilepsy, cardiovascular conditions, or simply don't enjoy being frightened, please proceed with caution.</div>
+                <div class="warning-note">Watch and play at your own risk!</div>
             </div>
         `;
         document.body.appendChild(warningDiv);
-        
         setTimeout(() => warningDiv.classList.add('visible'), 10);
-        
         const closeWarning = () => {
             if (warningSkipped) return;
             warningSkipped = true;
             warningDiv.classList.remove('visible');
-            setTimeout(() => {
-                warningDiv.remove();
-                if (callback) callback();
-            }, 500);
+            setTimeout(() => { warningDiv.remove(); if (callback) callback(); }, 500);
         };
-        
         warningDiv.addEventListener('click', closeWarning);
-        
-        setTimeout(() => {
-            if (!warningSkipped) closeWarning();
-        }, 10000);
+        setTimeout(() => { if (!warningSkipped) closeWarning(); }, 10000);
     }
     
-    // ==================== ЗАПУСК ИГРЫ ПОСЛЕ ПРЕДУПРЕЖДЕНИЯ ====================
     function initGameAfterWarning() {
         document.getElementById('deviceSelector').style.display = 'flex';
         document.querySelectorAll('.device-btn').forEach(btn => {
@@ -686,7 +700,7 @@
         gameLoop();
     }
     
-    // ==================== ИГРОВАЯ ЛОГИКА ====================
+    // ==================== ИГРОВЫЕ ПЕРЕМЕННЫЕ ====================
     let gameRunning = true, powerOut = false, powerOutTriggered = false;
     let leftDoor = false, leftLight = false, rightDoor = false, rightLight = false;
     let cameraOpen = false, cameraAnimFrame = 0, cameraAnimDirection = 0;
@@ -704,6 +718,7 @@
     let staticFrame = 0, staticTimer = 0;
     const STATIC_FRAME_COUNT = 8, STATIC_FRAME_HEIGHT = 720;
     const drainRates = [0.15, 0.375, 0.525, 0.75, 1.125];
+    const STATIC_FLASH_DURATION = 1500; // 1.5 секунды
     
     let animatronics = {
         bonnie: { name: "Bonnie", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "bonnie", doorArrivalTime: 0 },
@@ -761,7 +776,12 @@
             const moves = moveMap[name][anim.location];
             if (!moves || moves.length === 0) continue;
             const newLoc = moves[Math.floor(Math.random() * moves.length)];
-            if (lastAnimLocation[name] !== newLoc && cameraOpen) { lastAnimLocation[name] = newLoc; cameraStaticIntensity = 0.75; cameraStaticTimer = Date.now(); }
+            // Вспышка статики при перемещении аниматроника (если камера открыта)
+            if (lastAnimLocation[name] !== newLoc && cameraOpen) { 
+                lastAnimLocation[name] = newLoc; 
+                cameraStaticIntensity = 0.8; 
+                cameraStaticTimer = Date.now(); 
+            }
             const wasAtDoor = anim.atDoor;
             anim.location = newLoc;
             anim.atDoor = (anim.location === "Office Left" || anim.location === "Office Right");
@@ -769,6 +789,19 @@
             if (anim.atDoor && !wasAtDoor) anim.doorArrivalTime = Date.now();
             if (!anim.atDoor && wasAtDoor) anim.doorArrivalTime = 0;
             if (name === "foxy") { if (anim.location !== "Pirates Cove") anim.runCounter = (anim.runCounter || 0) + 1; else anim.runCounter = 0; }
+        }
+    }
+    
+    function updateStaticIntensity() {
+        // Базовая статика всегда 0.25, но когда была вспышка - она затухает до базового уровня за 1.5 секунды
+        if (cameraStaticTimer && Date.now() - cameraStaticTimer > STATIC_FLASH_DURATION) { 
+            cameraStaticIntensity = 0.25; 
+            cameraStaticTimer = 0; 
+        } else if (cameraStaticTimer && cameraStaticIntensity > 0.25) {
+            // Плавное затухание от 0.8 до 0.25 за 1.5 секунды
+            const elapsed = Date.now() - cameraStaticTimer;
+            const progress = Math.min(1, elapsed / STATIC_FLASH_DURATION);
+            cameraStaticIntensity = 0.25 + (0.8 - 0.25) * (1 - progress);
         }
     }
     
@@ -803,6 +836,7 @@
             cameraOpen = false; cameraAnimFrame = 0; cameraAnimDirection = 0;
             leftDoorAnim = 0; rightDoorAnim = 0; leftDoorAnimDir = 0; rightDoorAnimDir = 0;
             jumpscareTriggered = false; gameRunning = true;
+            cameraStaticIntensity = 0.25; cameraStaticTimer = 0;
             document.getElementById('gameOverScreen').style.display = 'none';
             if (lightHumPlaying) { AudioManager.stop('light_click'); lightHumPlaying = false; }
             animatronics = {
@@ -811,6 +845,7 @@
                 foxy: { name: "Foxy", location: "Pirates Cove", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "foxy", doorArrivalTime: 0, runCounter: 0 },
                 freddy: { name: "Freddy", location: "Show Stage", aiLevel: 0, atDoor: false, side: null, active: true, spriteKey: "freddy", doorArrivalTime: 0 }
             };
+            lastAnimLocation = { bonnie: "Show Stage", chica: "Show Stage", foxy: "Pirates Cove", freddy: "Show Stage" };
             const aiMap = { 1: 0, 2: 3, 3: 5, 4: 7, 5: 10 };
             const lvl = aiMap[night] || 0;
             animatronics.bonnie.aiLevel = lvl;
@@ -890,7 +925,7 @@
     function drawStaticOverlay(intensity) {
         if (!images.staticScreen || intensity <= 0) return;
         staticTimer++; if (staticTimer >= 4) { staticTimer = 0; staticFrame = (staticFrame + 1) % STATIC_FRAME_COUNT; }
-        ctx.save(); ctx.globalAlpha = intensity;
+        ctx.save(); ctx.globalAlpha = intensity * 0.7;
         ctx.drawImage(images.staticScreen, 0, staticFrame * STATIC_FRAME_HEIGHT, 1280, 720, 0, 0, canvas.width, canvas.height);
         ctx.restore();
     }
@@ -933,6 +968,7 @@
                 if (camPos) for (let [name, anim] of Object.entries(animatronics)) if (anim.location === room.name && anim.active && images[anim.spriteKey]) {
                     const pos = camPos[name]; if (pos) ctx.drawImage(images[anim.spriteKey], pos.x - room.panX, pos.y, 400, 400);
                 }
+                updateStaticIntensity();
                 drawStaticOverlay(cameraStaticIntensity);
                 if (images.cameraBarMenu) ctx.drawImage(images.cameraBarMenu, 350, 640);
                 if (images.cameraCams) ctx.drawImage(images.cameraCams, 800, 300);
@@ -972,13 +1008,17 @@
         if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
         else { clientX = e.clientX; clientY = e.clientY; }
         const rect = canvas.getBoundingClientRect();
-        const clickX = (clientX - rect.left) * (canvas.width / rect.width);
-        const clickY = (clientY - rect.top) * (canvas.height / rect.height);
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (clientX - rect.left) * scaleX;
+        const clickY = (clientY - rect.top) * scaleY;
         if (clickX >= 55 && clickX <= 355 && clickY >= 506 && clickY <= 551) {
             if (newspaperOverlay) {
                 newspaperOverlay.classList.remove('active');
-                setTimeout(() => { newspaperOverlay.remove(); newspaperOverlay = null; newspaperActive = false; inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); }, 500);
-            } else showNewspaperWithAnimation(() => { inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); });
+                setTimeout(() => { if (newspaperOverlay) newspaperOverlay.remove(); newspaperOverlay = null; newspaperActive = false; inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); }, 500);
+            } else {
+                showNewspaperWithAnimation(() => { inMenu = false; isGameStarted = true; stopMenuMusic(); startNight(1); updateCallButtonVisibility(); });
+            }
         }
     }
     
@@ -990,10 +1030,13 @@
         if (e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; e.preventDefault(); }
         else { clientX = e.clientX; clientY = e.clientY; }
         const rect = canvas.getBoundingClientRect();
-        let clickX = (clientX - rect.left) * (canvas.width / rect.width);
-        let clickY = (clientY - rect.top) * (canvas.height / rect.height);
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        let clickX = (clientX - rect.left) * scaleX;
+        let clickY = (clientY - rect.top) * scaleY;
         clickX = Math.min(Math.max(clickX, 0), canvas.width);
         clickY = Math.min(Math.max(clickY, 0), canvas.height);
+        
         if (clickX >= clickZones.cameraBtn.x && clickX <= clickZones.cameraBtn.x + clickZones.cameraBtn.w && clickY >= clickZones.cameraBtn.y && clickY <= clickZones.cameraBtn.y + clickZones.cameraBtn.h && !powerOut) {
             if (cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 2; AudioManager.play('camera_close'); }
             else if (!cameraOpen && cameraAnimDirection === 0) { cameraAnimDirection = 1; AudioManager.play('camera_open'); }
@@ -1026,10 +1069,10 @@
     }
     
     function handleCanvasClick(e) { if (inMenu) handleMenuClick(e); else handleGameClick(e); }
-    function handleMouseMove(e) { if (!isPhone && !inMenu) { const rect = canvas.getBoundingClientRect(); mouseX = (e.clientX - rect.left) * (canvas.width / rect.width); mouseX = Math.min(Math.max(mouseX, 0), canvas.width); } }
+    function handleMouseMove(e) { if (!isPhone && !inMenu) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; mouseX = (e.clientX - rect.left) * scaleX; mouseX = Math.min(Math.max(mouseX, 0), canvas.width); } }
     let touchStartMouseX = 640, touchStartX = 0;
-    function handleTouchStart(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const touchX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width); touchStartX = touchX; touchStartMouseX = mouseX; e.preventDefault(); } }
-    function handleTouchMove(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const touchX = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width); mouseX = Math.min(Math.max(touchStartMouseX + (touchX - touchStartX), 0), canvas.width); e.preventDefault(); } }
+    function handleTouchStart(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; touchStartX = touchX; touchStartMouseX = mouseX; e.preventDefault(); } }
+    function handleTouchMove(e) { if (inMenu) return; if (isPhone) { const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const touchX = (e.touches[0].clientX - rect.left) * scaleX; mouseX = Math.min(Math.max(touchStartMouseX + (touchX - touchStartX), 0), canvas.width); e.preventDefault(); } }
     function handleTouchEnd(e) { if (inMenu) return; if (isPhone) e.preventDefault(); }
     
     function startMenu() { inMenu = true; isGameStarted = false; document.getElementById('nightInfo').classList.remove('visible'); updateCallButtonVisibility(); }
@@ -1042,6 +1085,13 @@
         } else if (inMenu) drawMenu();
         requestAnimationFrame(gameLoop);
     }
+    
+    document.getElementById('resetCallBtn').addEventListener('click', () => {
+        if (!inMenu && !newspaperActive && !powerOut && gameRunning && (callActive || callTimeout !== null)) resetPhoneCall();
+    });
+    document.getElementById('restartBtn').addEventListener('click', () => { if (!inMenu && isGameStarted) startNight(nightNumber); });
+    const zoomSlider = document.getElementById('zoomSlider');
+    zoomSlider.addEventListener('input', (e) => { setZoom(parseInt(e.target.value)); });
     
     const soundsList = ['camera_close', 'camera_open', 'change_camera', 'door_open_close', 'powerdown', 'freddy_is_here', 'office_ambience'];
     soundsList.forEach(s => AudioManager.load(s, `./SFX/${s}.wav`));
